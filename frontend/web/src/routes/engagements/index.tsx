@@ -1,24 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from '@tanstack/react-router';
+import { engagementsQueries } from '@/features/engagement/api';
+import { EngagementsPage } from '@/features/engagement/components/EngagementsPage';
+import { listEngagementsParamsSchema } from '@/features/engagement/model';
 
-export const Route = createFileRoute("/engagements/")({
-	component: RouteComponent,
+export const Route = createFileRoute('/engagements/')({
+  validateSearch: listEngagementsParamsSchema,
+  loaderDeps: ({ search }) => ({ search }),
+  loader: ({ context, deps }) =>
+    context.queryClient.ensureInfiniteQueryData(engagementsQueries.infiniteList(deps.search)),
+  component: EngagementsPage,
 });
-
-function RouteComponent() {
-	return (
-		<div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-			<header className="mb-8">
-				<div className="flex items-baseline gap-3">
-					<h1 className="text-3xl font-semibold tracking-tight">Engagements</h1>
-					<span className="text-xs uppercase tracking-wider text-muted-foreground">
-						À venir
-					</span>
-				</div>
-				<p className="mt-2 text-muted-foreground">
-					Promesses publiques et plans pluriannuels, et leur trajectoire
-					d'exécution
-				</p>
-			</header>
-		</div>
-	);
-}

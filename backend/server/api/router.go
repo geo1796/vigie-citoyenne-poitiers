@@ -8,6 +8,7 @@ import (
 	"github.com/geo1796/vigie-citoyenne-poitiers/features/common/mailer"
 	"github.com/geo1796/vigie-citoyenne-poitiers/postgres"
 	"github.com/geo1796/vigie-citoyenne-poitiers/features/deliberation"
+	"github.com/geo1796/vigie-citoyenne-poitiers/features/engagement"
 	"github.com/geo1796/vigie-citoyenne-poitiers/features/indicateur"
 	"github.com/go-chi/chi/v5"
 )
@@ -37,6 +38,7 @@ func Router(
 	})
 
 	r.Mount("/deliberations", deliberation.Router(store.Queries()))
+	r.Mount("/engagements", engagement.Router(store, accessTokenManager))
 	r.Mount("/indicateurs", indicateur.Router(store.Queries()))
 	r.Mount("/auth", auth.Router(
 		store,

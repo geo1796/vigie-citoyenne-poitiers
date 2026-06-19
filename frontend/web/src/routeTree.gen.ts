@@ -23,8 +23,10 @@ import { Route as EngagementsIndexRouteImport } from './routes/engagements/index
 import { Route as DeliberationsIndexRouteImport } from './routes/deliberations/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as IndicateursIndicateurKeyRouteImport } from './routes/indicateurs/$indicateurKey'
+import { Route as EngagementsEngagementIdRouteImport } from './routes/engagements/$engagementId'
 import { Route as DeliberationsDeliberationIdRouteImport } from './routes/deliberations/$deliberationId'
 import { Route as AdminInviterContributeurRouteImport } from './routes/admin/inviter-contributeur'
+import { Route as EspaceContributeurEngagementsNouveauRouteImport } from './routes/espace-contributeur/engagements/nouveau'
 
 const MentionsLegalesLazyRouteImport = createFileRoute('/mentions-legales')()
 
@@ -96,6 +98,11 @@ const IndicateursIndicateurKeyRoute =
     path: '/indicateurs/$indicateurKey',
     getParentRoute: () => rootRouteImport,
   } as any)
+const EngagementsEngagementIdRoute = EngagementsEngagementIdRouteImport.update({
+  id: '/engagements/$engagementId',
+  path: '/engagements/$engagementId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DeliberationsDeliberationIdRoute =
   DeliberationsDeliberationIdRouteImport.update({
     id: '/deliberations/$deliberationId',
@@ -108,6 +115,12 @@ const AdminInviterContributeurRoute =
     path: '/admin/inviter-contributeur',
     getParentRoute: () => rootRouteImport,
   } as any)
+const EspaceContributeurEngagementsNouveauRoute =
+  EspaceContributeurEngagementsNouveauRouteImport.update({
+    id: '/espace-contributeur/engagements/nouveau',
+    path: '/espace-contributeur/engagements/nouveau',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -118,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/mentions-legales': typeof MentionsLegalesLazyRoute
   '/admin/inviter-contributeur': typeof AdminInviterContributeurRoute
   '/deliberations/$deliberationId': typeof DeliberationsDeliberationIdRoute
+  '/engagements/$engagementId': typeof EngagementsEngagementIdRoute
   '/indicateurs/$indicateurKey': typeof IndicateursIndicateurKeyRoute
   '/admin/': typeof AdminIndexRoute
   '/deliberations/': typeof DeliberationsIndexRoute
@@ -125,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/espace-contributeur/': typeof EspaceContributeurIndexRoute
   '/indicateurs/': typeof IndicateursIndexRoute
   '/nominations/': typeof NominationsIndexRoute
+  '/espace-contributeur/engagements/nouveau': typeof EspaceContributeurEngagementsNouveauRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -135,6 +150,7 @@ export interface FileRoutesByTo {
   '/mentions-legales': typeof MentionsLegalesLazyRoute
   '/admin/inviter-contributeur': typeof AdminInviterContributeurRoute
   '/deliberations/$deliberationId': typeof DeliberationsDeliberationIdRoute
+  '/engagements/$engagementId': typeof EngagementsEngagementIdRoute
   '/indicateurs/$indicateurKey': typeof IndicateursIndicateurKeyRoute
   '/admin': typeof AdminIndexRoute
   '/deliberations': typeof DeliberationsIndexRoute
@@ -142,6 +158,7 @@ export interface FileRoutesByTo {
   '/espace-contributeur': typeof EspaceContributeurIndexRoute
   '/indicateurs': typeof IndicateursIndexRoute
   '/nominations': typeof NominationsIndexRoute
+  '/espace-contributeur/engagements/nouveau': typeof EspaceContributeurEngagementsNouveauRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -153,6 +170,7 @@ export interface FileRoutesById {
   '/mentions-legales': typeof MentionsLegalesLazyRoute
   '/admin/inviter-contributeur': typeof AdminInviterContributeurRoute
   '/deliberations/$deliberationId': typeof DeliberationsDeliberationIdRoute
+  '/engagements/$engagementId': typeof EngagementsEngagementIdRoute
   '/indicateurs/$indicateurKey': typeof IndicateursIndicateurKeyRoute
   '/admin/': typeof AdminIndexRoute
   '/deliberations/': typeof DeliberationsIndexRoute
@@ -160,6 +178,7 @@ export interface FileRoutesById {
   '/espace-contributeur/': typeof EspaceContributeurIndexRoute
   '/indicateurs/': typeof IndicateursIndexRoute
   '/nominations/': typeof NominationsIndexRoute
+  '/espace-contributeur/engagements/nouveau': typeof EspaceContributeurEngagementsNouveauRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -172,6 +191,7 @@ export interface FileRouteTypes {
     | '/mentions-legales'
     | '/admin/inviter-contributeur'
     | '/deliberations/$deliberationId'
+    | '/engagements/$engagementId'
     | '/indicateurs/$indicateurKey'
     | '/admin/'
     | '/deliberations/'
@@ -179,6 +199,7 @@ export interface FileRouteTypes {
     | '/espace-contributeur/'
     | '/indicateurs/'
     | '/nominations/'
+    | '/espace-contributeur/engagements/nouveau'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -189,6 +210,7 @@ export interface FileRouteTypes {
     | '/mentions-legales'
     | '/admin/inviter-contributeur'
     | '/deliberations/$deliberationId'
+    | '/engagements/$engagementId'
     | '/indicateurs/$indicateurKey'
     | '/admin'
     | '/deliberations'
@@ -196,6 +218,7 @@ export interface FileRouteTypes {
     | '/espace-contributeur'
     | '/indicateurs'
     | '/nominations'
+    | '/espace-contributeur/engagements/nouveau'
   id:
     | '__root__'
     | '/'
@@ -206,6 +229,7 @@ export interface FileRouteTypes {
     | '/mentions-legales'
     | '/admin/inviter-contributeur'
     | '/deliberations/$deliberationId'
+    | '/engagements/$engagementId'
     | '/indicateurs/$indicateurKey'
     | '/admin/'
     | '/deliberations/'
@@ -213,6 +237,7 @@ export interface FileRouteTypes {
     | '/espace-contributeur/'
     | '/indicateurs/'
     | '/nominations/'
+    | '/espace-contributeur/engagements/nouveau'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -224,6 +249,7 @@ export interface RootRouteChildren {
   MentionsLegalesLazyRoute: typeof MentionsLegalesLazyRoute
   AdminInviterContributeurRoute: typeof AdminInviterContributeurRoute
   DeliberationsDeliberationIdRoute: typeof DeliberationsDeliberationIdRoute
+  EngagementsEngagementIdRoute: typeof EngagementsEngagementIdRoute
   IndicateursIndicateurKeyRoute: typeof IndicateursIndicateurKeyRoute
   AdminIndexRoute: typeof AdminIndexRoute
   DeliberationsIndexRoute: typeof DeliberationsIndexRoute
@@ -231,6 +257,7 @@ export interface RootRouteChildren {
   EspaceContributeurIndexRoute: typeof EspaceContributeurIndexRoute
   IndicateursIndexRoute: typeof IndicateursIndexRoute
   NominationsIndexRoute: typeof NominationsIndexRoute
+  EspaceContributeurEngagementsNouveauRoute: typeof EspaceContributeurEngagementsNouveauRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -326,6 +353,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndicateursIndicateurKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/engagements/$engagementId': {
+      id: '/engagements/$engagementId'
+      path: '/engagements/$engagementId'
+      fullPath: '/engagements/$engagementId'
+      preLoaderRoute: typeof EngagementsEngagementIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/deliberations/$deliberationId': {
       id: '/deliberations/$deliberationId'
       path: '/deliberations/$deliberationId'
@@ -340,6 +374,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminInviterContributeurRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/espace-contributeur/engagements/nouveau': {
+      id: '/espace-contributeur/engagements/nouveau'
+      path: '/espace-contributeur/engagements/nouveau'
+      fullPath: '/espace-contributeur/engagements/nouveau'
+      preLoaderRoute: typeof EspaceContributeurEngagementsNouveauRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -352,6 +393,7 @@ const rootRouteChildren: RootRouteChildren = {
   MentionsLegalesLazyRoute: MentionsLegalesLazyRoute,
   AdminInviterContributeurRoute: AdminInviterContributeurRoute,
   DeliberationsDeliberationIdRoute: DeliberationsDeliberationIdRoute,
+  EngagementsEngagementIdRoute: EngagementsEngagementIdRoute,
   IndicateursIndicateurKeyRoute: IndicateursIndicateurKeyRoute,
   AdminIndexRoute: AdminIndexRoute,
   DeliberationsIndexRoute: DeliberationsIndexRoute,
@@ -359,6 +401,8 @@ const rootRouteChildren: RootRouteChildren = {
   EspaceContributeurIndexRoute: EspaceContributeurIndexRoute,
   IndicateursIndexRoute: IndicateursIndexRoute,
   NominationsIndexRoute: NominationsIndexRoute,
+  EspaceContributeurEngagementsNouveauRoute:
+    EspaceContributeurEngagementsNouveauRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

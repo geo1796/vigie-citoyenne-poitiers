@@ -29,9 +29,28 @@ type AppDeliberation struct {
 	VoteContre       int32
 	VoteAbstention   int32
 	RawData          []byte
+	Documents        []byte
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
-	Documents        []byte
+}
+
+type AppEngagement struct {
+	ID        uuid.UUID
+	Title     string
+	Content   string
+	CreatedBy uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type AppEngagementDeliberation struct {
+	EngagementID   uuid.UUID
+	DeliberationID uuid.UUID
+}
+
+type AppEngagementIndicateurObservation struct {
+	EngagementID  uuid.UUID
+	ObservationID uuid.UUID
 }
 
 type AppIndicateurObservation struct {
