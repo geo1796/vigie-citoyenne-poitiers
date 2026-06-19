@@ -1,0 +1,48 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema: "postgres/migrations"
+    queries:
+      - "postgres/queries"
+    gen:
+      go:
+        out: "postgres/dao"
+        package: "dao"
+        sql_package: "pgx/v5"
+        emit_pointers_for_null_types: true
+        overrides:
+          - db_type: "uuid"
+            nullable: false
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+          - db_type: "uuid"
+            nullable: true
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+              pointer: true
+
+          - db_type: "timestamptz"
+            nullable: false
+            go_type:
+              import: "time"
+              type: "Time"
+          - db_type: "timestamptz"
+            nullable: true
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
+          
+          - db_type: "date"
+            nullable: false
+            go_type:
+              import: "time"
+              type: "Time"
+          - db_type: "date"
+            nullable: true
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true

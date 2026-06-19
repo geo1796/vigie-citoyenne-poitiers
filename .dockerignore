@@ -1,0 +1,26 @@
+# flyctl launch added from frontend/web/.gitignore
+# Logs
+frontend/web/**/logs
+frontend/web/**/*.log
+frontend/web/**/npm-debug.log*
+frontend/web/**/yarn-debug.log*
+frontend/web/**/yarn-error.log*
+frontend/web/**/pnpm-debug.log*
+frontend/web/**/lerna-debug.log*
+
+frontend/web/**/node_modules
+frontend/web/**/dist
+frontend/web/**/dist-ssr
+frontend/web/**/*.local
+
+# Editor directories and files
+frontend/web/**/.vscode/*
+!frontend/web/**/.vscode/extensions.json
+frontend/web/**/.idea
+frontend/web/**/.DS_Store
+frontend/web/**/*.suo
+frontend/web/**/*.ntvs*
+frontend/web/**/*.njsproj
+frontend/web/**/*.sln
+frontend/web/**/*.sw?
+fly.toml

@@ -1,0 +1,43 @@
+services:
+
+  database:
+    build:
+      context: database
+    container_name: database
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    env_file:
+      - .database.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -h database -p 5432 -d vcdb" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+    container_name: app
+    ports:
+      - "8080:8080"
+    env_file:
+      - .backend.env
+    depends_on:
+      database:
+        condition: service_healthy
+
+  job:
+    build:
+      context: .
+      dockerfile: Dockerfile.jobs
+    command: ["migrate", "up"]
+    env_file:
+      - .backend.env
+    depends_on:
+      database:
+        condition: service_healthy
+
+volumes:
+  pg_data:
