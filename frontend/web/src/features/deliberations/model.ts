@@ -96,7 +96,7 @@ export type ListDeliberationsResult = z.infer<
 
 export const findDeliberationResultSchema = z.object({
 	deliberation: deliberationSchema,
-	documents: z.array(deliberationDocumentSchema),
+	documents: z.array(deliberationDocumentSchema).optional(),
 });
 
 export type FindDeliberationResult = z.infer<

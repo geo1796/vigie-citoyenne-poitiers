@@ -275,7 +275,7 @@ export function DeliberationDetailPage() {
 				</div>
 			</section>
 
-			<DocumentsSection documents={data.documents} />
+			{data.documents && <DocumentsSection documents={data.documents} />}
 
 			{/* Métadonnées administratives */}
 			<section className="mt-12 space-y-4">

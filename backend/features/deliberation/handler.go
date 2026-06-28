@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/geo1796/vigie-citoyenne-poitiers/features/common/httpx"
+	"github.com/geo1796/vigie-citoyenne-poitiers/logger"
 	"github.com/geo1796/vigie-citoyenne-poitiers/postgres/dao"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -42,17 +43,23 @@ func (h *listDeliberationsHandler) ListDeliberations() http.HandlerFunc {
 			return httpx.NewError(http.StatusBadRequest, err.Error())
 		}
 
+		limit := params.Limit
+		params.Limit++
 		rows, err := h.queries.ListDeliberations(r.Context(), params)
 		if err != nil {
 			return fmt.Errorf("ListDeliberations failed: %w", err)
 		}
 
-		hasMore := len(rows) > int(params.Limit)
+		logger.Debug("ListDeliberations", logger.Any("params", params))
+
+		hasMore := len(rows) > int(limit)
 		nextOffset := 0
 		if hasMore {
 			rows = rows[:params.Limit]
 			nextOffset = int(params.Offset) + len(rows)
 		}
+
+		logger.Debug("ListDeliberations", logger.Any("hasMore", hasMore), logger.Any("nextOffset", nextOffset))
 
 		items := make([]Deliberation, len(rows))
 		for i, row := range rows {
@@ -114,7 +121,7 @@ func (h *listDeliberationsHandler) parseURLParams(r *http.Request) (dao.ListDeli
 		if parsed, err := parseInt32(limitParam); err != nil {
 			return dao.ListDeliberationsParams{}, fmt.Errorf("failed to parse 'limit': %w", err)
 		} else {
-			limit = parsed
+			limit = parsed 
 		}
 	}
 
@@ -176,7 +183,7 @@ func NewFindDeliberationHandler(queries *dao.Queries) FindDeliberationHandler {
 
 type FindDeliberationOutput struct {
 	Deliberation Deliberation `json:"deliberation"`
-	Documents    []Document   `json:"documents"`
+	Documents    []Document   `json:"documents,omitempty"`
 }
 
 func (h *findDeliberationHandler) FindDeliberation() http.HandlerFunc {
@@ -194,13 +201,7 @@ func (h *findDeliberationHandler) FindDeliberation() http.HandlerFunc {
 			return fmt.Errorf("FindDeliberation failed: %w", err)
 		}
 
-		var documents []Document
-		if err = json.Unmarshal(row.Documents, &documents); err != nil {
-			return fmt.Errorf("FindDeliberation failed: %w", err)
-		}
-
-		return httpx.JSON(w, http.StatusOK, FindDeliberationOutput{
-			Documents: documents,
+		out := FindDeliberationOutput{
 			Deliberation: Deliberation{
 				ID:               row.ID,
 				DelibID:          row.DelibID,
@@ -222,6 +223,14 @@ func (h *findDeliberationHandler) FindDeliberation() http.HandlerFunc {
 				CreatedAt:        row.CreatedAt,
 				UpdatedAt:        row.UpdatedAt,
 			},
-		})
+		}
+
+		if row.Documents != nil {
+			if err = json.Unmarshal(row.Documents, &out.Documents); err != nil {
+				return fmt.Errorf("FindDeliberation failed: %w", err)
+			}
+		}
+
+		return httpx.JSON(w, http.StatusOK, out)
 	})
 }

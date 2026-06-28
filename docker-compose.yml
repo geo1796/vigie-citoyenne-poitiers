@@ -32,7 +32,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.jobs
-    command: ["migrate", "up"]
+    command: ["ingest", "deliberations", "documents"]
     env_file:
       - .backend.env
     depends_on:
