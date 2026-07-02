@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/geo1796/vigie-citoyenne-poitiers/features/common/httpx"
-	"github.com/geo1796/vigie-citoyenne-poitiers/logger"
 	"github.com/geo1796/vigie-citoyenne-poitiers/postgres/dao"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -50,16 +49,12 @@ func (h *listDeliberationsHandler) ListDeliberations() http.HandlerFunc {
 			return fmt.Errorf("ListDeliberations failed: %w", err)
 		}
 
-		logger.Debug("ListDeliberations", logger.Any("params", params))
-
 		hasMore := len(rows) > int(limit)
 		nextOffset := 0
 		if hasMore {
-			rows = rows[:params.Limit]
+			rows = rows[:limit]
 			nextOffset = int(params.Offset) + len(rows)
 		}
-
-		logger.Debug("ListDeliberations", logger.Any("hasMore", hasMore), logger.Any("nextOffset", nextOffset))
 
 		items := make([]Deliberation, len(rows))
 		for i, row := range rows {
@@ -121,7 +116,7 @@ func (h *listDeliberationsHandler) parseURLParams(r *http.Request) (dao.ListDeli
 		if parsed, err := parseInt32(limitParam); err != nil {
 			return dao.ListDeliberationsParams{}, fmt.Errorf("failed to parse 'limit': %w", err)
 		} else {
-			limit = parsed 
+			limit = parsed
 		}
 	}
 
