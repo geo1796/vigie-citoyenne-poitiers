@@ -50,6 +50,15 @@ export const budgetBaseLabels: Record<BudgetBase, string> = {
 export const ventilationAxeSchema = z.enum(["budget", "chapitre", "fonction"]);
 export type VentilationAxe = "fonction" | "chapitre" | "budget";
 
+// État de vue du budget (exercice sélectionné + axe de ventilation + base).
+// Remonté en props pour découpler le composant de la synchro URL : la page
+// dédiée le branche sur les search params, l'accordion engagement sur un useState.
+export type BudgetView = {
+	exercice?: string;
+	axe?: VentilationAxe;
+	base?: BudgetBase;
+};
+
 export const ventilationAxeLabels: Record<VentilationAxe, string> = {
 	fonction: "Par politique publique",
 	chapitre: "Par nature",

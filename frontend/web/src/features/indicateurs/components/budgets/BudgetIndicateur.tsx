@@ -14,7 +14,6 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/shadcn/components/ui/tooltip";
-import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Info } from "lucide-react";
 import { useMemo } from "react";
 import type { Observation } from "../../model";
@@ -22,6 +21,7 @@ import { BudgetDonut } from "./BudgetDonut";
 import { BudgetEcartTable } from "./BudgetEcartTable";
 import {
 	type BudgetBase,
+	type BudgetView,
 	budgetObservationDataSchema,
 	type LigneBudget,
 	type VentilationAxe,
@@ -30,6 +30,8 @@ import {
 
 interface Props {
 	observations: Observation[];
+	view: BudgetView;
+	onViewChange: (patch: Partial<BudgetView>) => void;
 }
 
 interface ParsedExercice {
@@ -40,7 +42,7 @@ interface ParsedExercice {
 const AXE_DEFAULT: VentilationAxe = "budget";
 const BASE_DEFAULT: BudgetBase = "realise";
 
-export function BudgetIndicateur({ observations }: Props) {
+export function BudgetIndicateur({ observations, view, onViewChange }: Props) {
 	const exercices = useMemo<ParsedExercice[]>(() => {
 		return observations
 			.map((obs) => ({
@@ -50,21 +52,15 @@ export function BudgetIndicateur({ observations }: Props) {
 			.sort((a, b) => b.reference.localeCompare(a.reference));
 	}, [observations]);
 
-	const search = useSearch({ from: "/indicateurs/$indicateurKey" });
-	const navigate = useNavigate({ from: "/indicateurs/$indicateurKey" });
-
 	const selected = useMemo(() => {
-		if (
-			search.exercice &&
-			exercices.some((e) => e.reference === search.exercice)
-		) {
-			return search.exercice;
+		if (view.exercice && exercices.some((e) => e.reference === view.exercice)) {
+			return view.exercice;
 		}
 		return exercices[0]?.reference ?? "";
-	}, [search.exercice, exercices]);
+	}, [view.exercice, exercices]);
 
-	const axe = search.axe ?? AXE_DEFAULT;
-	const base = search.base ?? BASE_DEFAULT;
+	const axe = view.axe ?? AXE_DEFAULT;
+	const base = view.base ?? BASE_DEFAULT;
 
 	const exercice = exercices.find((e) => e.reference === selected);
 
@@ -89,9 +85,7 @@ export function BudgetIndicateur({ observations }: Props) {
 					value={selected}
 					onValueChange={(value) => {
 						if (value === null) return;
-						navigate({
-							search: (prev) => ({ ...prev, exercice: value }),
-						});
+						onViewChange({ exercice: value });
 					}}
 				>
 					<SelectTrigger id="exercice-select" className="w-32">
@@ -113,15 +107,11 @@ export function BudgetIndicateur({ observations }: Props) {
 					lignes={exercice.lignes}
 					axe={axe}
 					onAxeChange={(nextAxe) => {
-						navigate({
-							search: (prev) => ({ ...prev, axe: nextAxe }),
-						});
+						onViewChange({ axe: nextAxe });
 					}}
 					base={base}
 					onBaseChange={(nextBase) => {
-						navigate({
-							search: (prev) => ({ ...prev, base: nextBase }),
-						});
+						onViewChange({ base: nextBase });
 					}}
 				/>
 			)}

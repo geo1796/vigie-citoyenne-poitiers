@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { indicateursQueries } from "../api";
 import { type IndicateurKey, indicateurKeyLabels } from "../model";
@@ -13,6 +13,11 @@ export function IndicateurDetailPage({ indicateurKey }: Props) {
 	const { data: observations } = useSuspenseQuery(
 		indicateursQueries.observations(indicateurKey),
 	);
+
+	// L'état de vue (exercice/axe/base) est persisté dans les search params de
+	// la route pour permettre le partage par lien profond.
+	const search = useSearch({ from: "/indicateurs/$indicateurKey" });
+	const navigate = useNavigate({ from: "/indicateurs/$indicateurKey" });
 
 	return (
 		<div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
@@ -36,6 +41,10 @@ export function IndicateurDetailPage({ indicateurKey }: Props) {
 			<IndicateurDetail
 				indicateurKey={indicateurKey}
 				observations={observations}
+				view={search}
+				onViewChange={(patch) =>
+					navigate({ search: (prev) => ({ ...prev, ...patch }) })
+				}
 			/>
 		</div>
 	);
