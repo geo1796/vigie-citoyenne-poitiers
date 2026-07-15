@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/geo1796/vigie-citoyenne-poitiers/features/indicateur"
+	"github.com/geo1796/vigie-citoyenne-poitiers/logger"
 	"github.com/geo1796/vigie-citoyenne-poitiers/postgres/dao"
 )
 
@@ -40,6 +41,7 @@ func (s *service) fetchAndIngestIndicateurs(ctx context.Context, opts indicateur
 	if err != nil {
 		return fmt.Errorf("fetch dataset lines: opts=%+v err=%w", opts, err)
 	}
+	logger.Debug("fetchAndIngestIndicateurs", logger.Any("opts", opts), logger.Any("len lines", len(lines)))
 
 	observations, err := buildBudgetObservations(opts.key, lines)
 	if err != nil {
@@ -70,8 +72,7 @@ func (s *service) fetchAndIngestIndicateurs(ctx context.Context, opts indicateur
 }
 
 // buildBudgetObservations transforme les lignes brutes d'un dataset budget
-// data-fair en observations agrégées par exercice. Elle filtre les opérations
-// d'ordre (ordre = "O") et normalise les variations de nomenclature.
+// data-fair en observations agrégées par exercice. Elle normalise les variations de nomenclature.
 func buildBudgetObservations(key indicateur.Key, lines []DatasetLine) ([]indicateur.Observation, error) {
 	linesByExercice := make(map[int][]indicateur.LigneBudget)
 
@@ -104,6 +105,7 @@ func buildBudgetObservations(key indicateur.Key, lines []DatasetLine) ([]indicat
 			},
 		})
 	}
+	logger.Debug("buildBudgetObservations", logger.Any("len observations", len(observations)))
 	return observations, nil
 }
 
@@ -112,20 +114,25 @@ func buildBudgetObservations(key indicateur.Key, lines []DatasetLine) ([]indicat
 // exercice manquant, section/sens inconnus). Renvoie (_, _, err) seulement
 // pour les erreurs structurelles inattendues.
 func parseBudgetLine(raw DatasetLine) (indicateur.LigneBudget, bool, error) {
+	operation, _ := raw["ordre"].(string)
 	// L'exercice doit être présent et entier ; sinon ligne parasite (ex: "Somme :").
 	exFloat, ok := raw["exercice"].(float64)
 	if !ok {
+		logger.Debug("parseBudgetLine", logger.Any("exercice not ok", exFloat))
 		return indicateur.LigneBudget{}, false, nil
 	}
 	_ = int(exFloat) // validé, utilisé par l'appelant
 
 	categorie, ok := parseCategorie(raw["depensesrecettes"])
 	if !ok {
+		// logger.Debug("parseBudgetLine", logger.Any("categorie not ok", categorie))
+		// categorie = indicateur.LigneBudgetCategorieDepenses
 		return indicateur.LigneBudget{}, false, nil
 	}
 
 	section, ok := parseSection(raw["section"])
 	if !ok {
+		logger.Debug("parseBudgetLine", logger.Any("section not ok", section))
 		return indicateur.LigneBudget{}, false, nil
 	}
 
@@ -134,7 +141,6 @@ func parseBudgetLine(raw DatasetLine) (indicateur.LigneBudget, bool, error) {
 	libelleFonction, _ := raw["libelle_de_la_fonction"].(string)
 	codeFonctionnel, _ := parseStringOrNumber(raw["code_fonctionnel"])
 	chapitre, _ := parseStringOrNumber(raw["chapitre"])
-	operation, _ := raw["ordre"].(string)
 
 	totalBP, _ := raw["total_bp"].(float64)
 	var realise *float64
@@ -185,7 +191,11 @@ func parseCategorie(v any) (indicateur.LigneBudgetCategorie, bool) {
 	switch s {
 	case "Dépenses":
 		return indicateur.LigneBudgetCategorieDepenses, true
+	case "D":
+		return indicateur.LigneBudgetCategorieDepenses, true
 	case "Recettes":
+		return indicateur.LigneBudgetCategorieRecettes, true
+	case "R":
 		return indicateur.LigneBudgetCategorieRecettes, true
 	default:
 		return "", false

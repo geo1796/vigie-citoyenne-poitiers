@@ -37,7 +37,7 @@ export function EngagementPage() {
         className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
-        Retour aux engagements
+        Retour
       </button>
 
       <div className="mb-4 text-xs uppercase tracking-wider text-muted-foreground">

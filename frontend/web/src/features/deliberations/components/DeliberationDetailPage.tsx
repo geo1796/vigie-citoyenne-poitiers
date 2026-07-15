@@ -220,7 +220,7 @@ export function DeliberationDetailPage() {
 				className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
 			>
 				<ArrowLeft className="size-4" />
-				Retour aux délibérations
+				Retour
 			</button>
 
 			{/* Eyebrow institutionnel */}

@@ -48,30 +48,44 @@ type linesResponse struct {
 	Next    string        `json:"next,omitempty"`
 }
 
-// fetchDatasetLines récupère toutes les lignes d'un dataset data-fair en JSON,
+func buildNextURL(s string) (string, error) {
+	u, err := url.Parse(s)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse url: %w", err)
+	}
+	q := u.Query()
+	q.Set("size", strconv.Itoa(maxLinesPageSize))
+	u.RawQuery = q.Encode()
+	return u.String(), nil
+}
+// FetchDatasetLines récupère toutes les lignes d'un dataset data-fair en JSON,
 // en gérant la pagination automatiquement. Renvoie l'intégralité des lignes
 // chargées en mémoire — adapté aux datasets de taille modérée (jusqu'à quelques
 // dizaines de milliers de lignes). Pour des datasets plus volumineux, envisager
 // une variante streaming via canal.
 func (d *datafairClient) FetchDatasetLines(ctx context.Context, datasetID string) ([]DatasetLine, error) {
-	u, err := url.Parse(fmt.Sprintf("%s/%s/lines", datafairBaseURL, datasetID))
+	nextURL, err := buildNextURL(fmt.Sprintf("%s/%s/lines", datafairBaseURL, datasetID))
 	if err != nil {
-		return nil, fmt.Errorf("build lines url: %w", err)
+		return nil, fmt.Errorf("failed build initial url: %w", err)
 	}
-	q := u.Query()
-	q.Set("size", strconv.Itoa(maxLinesPageSize))
-	u.RawQuery = q.Encode()
 
 	var all []DatasetLine
-	nextURL := u.String()
 
 	for nextURL != "" {
 		page, err := d.fetchLinesPage(ctx, nextURL)
 		if err != nil {
 			return nil, fmt.Errorf("fetch page: %w", err)
 		}
+
 		all = append(all, page.Results...)
-		nextURL = page.Next
+		if page.Next != "" {
+			nextURL, err = buildNextURL(page.Next)
+			if err != nil {
+				return nil, fmt.Errorf("failed to build nextURL: %w", err)
+			}
+		} else {
+			nextURL = ""
+		}
 
 		// Garde-fou : on s'attend à ce que data-fair ne renvoie pas un Next
 		// circulaire, mais si l'API se comporte mal, cap à 100 pages

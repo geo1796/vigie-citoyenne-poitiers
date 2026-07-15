@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
-import { ChevronLeft } from "lucide-react";
+import { useRouter } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import { indicateursQueries } from "../api";
 import { type IndicateurKey, indicateurKeyLabels } from "../model";
 import { IndicateurDetail } from "./IndicateurDetail";
@@ -14,15 +14,26 @@ export function IndicateurDetailPage({ indicateurKey }: Props) {
 		indicateursQueries.observations(indicateurKey),
 	);
 
+	const router = useRouter();
+
+	const handleBack = () => {
+		if (router.history.canGoBack()) {
+			router.history.back();
+		} else {
+			router.navigate({ to: "/indicateurs" });
+		}
+	};
+
 	return (
 		<div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-			<Link
-				to="/indicateurs"
-				className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+			<button
+				type="button"
+				onClick={handleBack}
+				className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
 			>
-				<ChevronLeft className="size-4" />
-				Indicateurs
-			</Link>
+				<ArrowLeft className="size-4" />
+				Retour
+			</button>
 
 			<header className="mb-8">
 				<div className="text-xs uppercase tracking-wider text-muted-foreground">
