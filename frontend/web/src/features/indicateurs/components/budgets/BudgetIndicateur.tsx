@@ -37,7 +37,7 @@ interface ParsedExercice {
 	lignes: LigneBudget[];
 }
 
-const AXE_DEFAULT: VentilationAxe = "budget";
+const AXE_DEFAULT: VentilationAxe = "chapitre";
 const BASE_DEFAULT: BudgetBase = "realise";
 
 export function BudgetIndicateur({ observations }: Props) {
@@ -181,15 +181,31 @@ function AxeToggle({
 				variant="outline"
 				size="sm"
 			>
-				<ToggleGroupItem value="budget">
-					{ventilationAxeLabels.budget}
-				</ToggleGroupItem>
-				<ToggleGroupItem value="chapitre">
-					{ventilationAxeLabels.chapitre}
-				</ToggleGroupItem>
-				<ToggleGroupItem value="fonction">
-					{ventilationAxeLabels.fonction}
-				</ToggleGroupItem>
+				<Tooltip>
+					<TooltipTrigger
+						render={
+							<ToggleGroupItem value="chapitre">
+								{ventilationAxeLabels.chapitre}
+							</ToggleGroupItem>
+						}
+					/>
+					<TooltipContent>
+						<p>Répartition selon le type d'opération comptable : charges de personnel, achats et services, subventions versées, impôts et taxes, dotations de l'État… C'est la nomenclature par chapitres, imposée par le plan comptable public. Elle répond à la question : « en quoi consiste cette dépense ou cette recette ? »</p>
+					</TooltipContent>
+				</Tooltip>
+				<Tooltip>
+					<TooltipTrigger
+						render={
+							<ToggleGroupItem value="fonction">
+								{ventilationAxeLabels.fonction}
+							</ToggleGroupItem>
+						}
+					/>
+					<TooltipContent>
+						<p>Répartition selon le domaine auquel l'argent est affecté : enseignement, culture, sport, action sociale, aménagement urbain, services généraux… C'est la nomenclature fonctionnelle, également normalisée par l'État. Elle répond à la question : « à quoi sert cet argent ? »</p>
+					</TooltipContent>
+				</Tooltip>
+
 			</ToggleGroup>
 		</div>
 	);
@@ -439,9 +455,9 @@ function KeyFigurePercent({
 				{value === null
 					? "—"
 					: new Intl.NumberFormat("fr-FR", {
-							style: "percent",
-							maximumFractionDigits: 0,
-						}).format(value)}
+						style: "percent",
+						maximumFractionDigits: 0,
+					}).format(value)}
 			</div>
 		</div>
 	);

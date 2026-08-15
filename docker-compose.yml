@@ -28,16 +28,16 @@ services:
       database:
         condition: service_healthy
 
-  job:
-    build:
-      context: .
-      dockerfile: Dockerfile.jobs
-    command: ["ingest", "indicateurs"]
-    env_file:
-      - .backend.env
-    depends_on:
-      database:
-        condition: service_healthy
+  # job:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.jobs
+  #   command: ["ingest", "indicateurs"]
+  #   env_file:
+  #     - .backend.env
+  #   depends_on:
+  #     database:
+  #       condition: service_healthy
 
 volumes:
   pg_data:

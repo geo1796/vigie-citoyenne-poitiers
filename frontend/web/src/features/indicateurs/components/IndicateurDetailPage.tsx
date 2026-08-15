@@ -17,11 +17,7 @@ export function IndicateurDetailPage({ indicateurKey }: Props) {
 	const router = useRouter();
 
 	const handleBack = () => {
-		if (router.history.canGoBack()) {
-			router.history.back();
-		} else {
-			router.navigate({ to: "/indicateurs" });
-		}
+		router.navigate({ to: "/indicateurs" });
 	};
 
 	return (

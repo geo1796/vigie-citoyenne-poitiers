@@ -47,13 +47,12 @@ export const budgetBaseLabels: Record<BudgetBase, string> = {
 // Axes de ventilation
 // ---------------------------------------------------------------------------
 
-export const ventilationAxeSchema = z.enum(["budget", "chapitre", "fonction"]);
-export type VentilationAxe = "fonction" | "chapitre" | "budget";
+export const ventilationAxeSchema = z.enum(["chapitre", "fonction"]);
+export type VentilationAxe = "fonction" | "chapitre";
 
 export const ventilationAxeLabels: Record<VentilationAxe, string> = {
-	fonction: "Par politique publique",
-	chapitre: "Par nature",
-	budget: "Par budget",
+	fonction: "Destination",
+	chapitre: "Nature",
 };
 
 export interface VentilationPart {
@@ -81,9 +80,6 @@ function getGroupingKey(
 		case "chapitre":
 			if (!l.chapitre || !l.libelleChapitre) return null;
 			return { key: l.chapitre, libelle: l.libelleChapitre };
-		case "budget":
-			if (!l.libelleBudget) return null;
-			return { key: l.libelleBudget, libelle: l.libelleBudget };
 	}
 }
 
