@@ -20,10 +20,6 @@ export function IndicateurCard({ indicateur }: Props) {
 			className="group block rounded-lg border border-border bg-card p-5 transition-colors hover:border-foreground/20 hover:bg-accent/40"
 		>
 			<div className="space-y-3">
-				<div className="text-xs uppercase tracking-wider text-muted-foreground">
-					Indicateur
-				</div>
-
 				<h2 className="text-lg font-semibold leading-tight text-foreground">
 					{label}
 				</h2>

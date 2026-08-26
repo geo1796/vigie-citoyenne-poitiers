@@ -27,10 +27,10 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 const NAV_LINKS = [
-	{ to: "/deliberations", label: "Délibérations" },
-	{ to: "/indicateurs", label: "Indicateurs" },
 	{ to: "/engagements", label: "Engagements" },
+	{ to: "/indicateurs", label: "Indicateurs" },
 	{ to: "/nominations", label: "Nominations" },
+	{ to: "/deliberations", label: "Délibérations" },
 	{ to: "/about", label: "À propos" },
 ] as const;
 
@@ -39,7 +39,7 @@ function RootComponent() {
 	const { data: session, isLoading } = useSession();
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="flex min-h-screen flex-col bg-background">
 			<header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md supports-backdrop-filter:bg-background/70">
 				<nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
 					<Link
@@ -127,7 +127,7 @@ function RootComponent() {
 				</nav>
 			</header>
 
-			<main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+			<main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
 				<Outlet />
 			</main>
 

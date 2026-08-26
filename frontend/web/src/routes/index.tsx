@@ -29,11 +29,10 @@ function HomePage() {
 			{/* CTAs */}
 			<div className="mt-8 flex w-full flex-col items-stretch gap-4 sm:mt-10 sm:w-auto sm:flex-row sm:items-center sm:gap-6">
 				<Link
-					to="/deliberations"
-					search={{ limit: 25, offset: 0, sortAsc: false }}
+					to="/engagements"
 					className="group inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 sm:justify-start"
 				>
-					Voir les délibérations
+					Voir les engagements
 					<ArrowRight
 						className="size-4 transition-transform group-hover:translate-x-0.5"
 						aria-hidden="true"

@@ -9,20 +9,20 @@ import { engagementsQueries } from '../api';
 import type { EngagementUpdate } from '../model';
 import { EngagementStatusBadge } from './EngagementStatusBadge';
 
-function formatLongDate(d: Date): string {
-  return d.toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
+// function formatLongDate(d: Date): string {
+//   return d.toLocaleDateString('fr-FR', {
+//     day: 'numeric',
+//     month: 'long',
+//     year: 'numeric',
+//   });
+// }
 
 function UpdateItem({ update }: { update: EngagementUpdate }) {
   return (
     <li className="border-l-2 border-border pl-4">
       <div className="flex flex-wrap items-center gap-2">
         <EngagementStatusBadge status={update.status} />
-        <span className="text-xs text-muted-foreground">{formatLongDate(update.createdAt)}</span>
+        {/* <span className="text-xs text-muted-foreground">{formatLongDate(update.createdAt)}</span> */}
       </div>
 
       <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
@@ -79,9 +79,9 @@ export function EngagementPage() {
       </button>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">
+        {/* <div className="text-xs uppercase tracking-wider text-muted-foreground">
           Engagement · ajouté le {formatLongDate(engagement.createdAt)}
-        </div>
+        </div> */}
         <EngagementStatusBadge status={engagement.status} />
       </div>
 
