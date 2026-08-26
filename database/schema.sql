@@ -161,7 +161,6 @@ CREATE TABLE app.engagements (
     CONSTRAINT  pk_engagements PRIMARY KEY (id),
 
     title       TEXT NOT NULL,
-    content     TEXT NOT NULL,
 
     created_by  UUID NOT NULL,
     CONSTRAINT  fk_engagements_user FOREIGN KEY (created_by)
@@ -178,32 +177,51 @@ CREATE TRIGGER trg_engagements_updated_at
 
 CREATE INDEX idx_engagements_created_at ON app.engagements (created_at DESC);
 
-CREATE TABLE app.engagement_deliberations (
+-- Chaque engagement est suivi dans le temps via une timeline de mises à jour.
+-- Une mise à jour justifie un statut et référence, au choix, une délibération
+-- (deliberation_id) et/ou une source externe (external_source, ex. article de presse).
+CREATE TABLE app.engagement_updates (
+    id              UUID NOT NULL DEFAULT gen_random_uuid(),
+    CONSTRAINT      pk_engagement_updates PRIMARY KEY (id),
+
     engagement_id   UUID NOT NULL,
-    CONSTRAINT fk_engagement_deliberations_engagement FOREIGN KEY (engagement_id)
+    CONSTRAINT fk_engagement_updates_engagement FOREIGN KEY (engagement_id)
         REFERENCES app.engagements (id) ON DELETE CASCADE,
 
-    deliberation_id UUID NOT NULL,
-    CONSTRAINT fk_engagement_deliberations_deliberation FOREIGN KEY (deliberation_id)
-        REFERENCES app.deliberations (id) ON DELETE CASCADE,
+    status          TEXT NOT NULL,
+    CONSTRAINT ck_engagement_updates_status
+        CHECK (status IN ('en_attente', 'en_cours', 'tenu', 'rompu')),
 
-    CONSTRAINT pk_engagement_deliberations PRIMARY KEY (engagement_id, deliberation_id)
+    content         TEXT NOT NULL,
+
+    -- Date de l'événement documenté par la mise à jour (saisie par le contributeur),
+    -- distincte de created_at qui n'est que l'horodatage d'insertion en base.
+    event_date      DATE NOT NULL,
+
+    deliberation_id UUID,
+    CONSTRAINT fk_engagement_updates_deliberation FOREIGN KEY (deliberation_id)
+        REFERENCES app.deliberations (id) ON DELETE SET NULL,
+
+    external_source TEXT,
+
+    created_by      UUID NOT NULL,
+    CONSTRAINT fk_engagement_updates_user FOREIGN KEY (created_by)
+        REFERENCES app.users (id) ON DELETE CASCADE,
+
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_engagement_deliberations_deliberation_id
-    ON app.engagement_deliberations (deliberation_id);
+CREATE TRIGGER trg_engagement_updates_updated_at
+    BEFORE UPDATE ON app.engagement_updates
+    FOR EACH ROW
+    EXECUTE FUNCTION set_updated_at();
 
-CREATE TABLE app.engagement_indicateur_observations (
-    engagement_id  UUID NOT NULL,
-    CONSTRAINT fk_engagement_observations_engagement FOREIGN KEY (engagement_id)
-        REFERENCES app.engagements (id) ON DELETE CASCADE,
+-- Sert au listing d'une timeline et à la dérivation du statut courant d'un engagement
+-- (mise à jour la plus récente).
+CREATE INDEX idx_engagement_updates_engagement_id
+    ON app.engagement_updates (engagement_id, created_at DESC);
 
-    observation_id UUID NOT NULL,
-    CONSTRAINT fk_engagement_observations_observation FOREIGN KEY (observation_id)
-        REFERENCES app.indicateur_observations (id) ON DELETE CASCADE,
-
-    CONSTRAINT pk_engagement_observations PRIMARY KEY (engagement_id, observation_id)
-);
-
-CREATE INDEX idx_engagement_observations_observation_id
-    ON app.engagement_indicateur_observations (observation_id);
+CREATE INDEX idx_engagement_updates_deliberation_id
+    ON app.engagement_updates (deliberation_id)
+    WHERE deliberation_id IS NOT NULL;

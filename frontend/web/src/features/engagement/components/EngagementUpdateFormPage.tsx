@@ -1,16 +1,11 @@
-import { useForm } from '@tanstack/react-form';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
-import { X } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { z } from 'zod';
 import { deliberationsQueries } from '@/features/deliberations/api';
 import { type Deliberation, instanceLabels } from '@/features/deliberations/model';
 import { Route } from '@/routes/espace-contributeur/engagements/$engagementId/updates/nouveau';
 import { Button } from '@/shadcn/components/ui/button';
+import { Calendar } from '@/shadcn/components/ui/calendar';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/shadcn/components/ui/field';
 import { Input } from '@/shadcn/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shadcn/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -19,25 +14,27 @@ import {
   SelectValue,
 } from '@/shadcn/components/ui/select';
 import { Textarea } from '@/shadcn/components/ui/textarea';
+import { useForm } from '@tanstack/react-form';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { CalendarIcon, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { z } from 'zod';
 import { useCreateEngagementUpdate } from '../api';
 import { type EngagementStatus, engagementStatusLabels, engagementStatusSchema } from '../model';
+import { fr } from "react-day-picker/locale"
+import React from 'react';
 
 const DEBOUNCE_MS = 300;
 const STATUS_OPTIONS = engagementStatusSchema.options;
 
 const updateFormSchema = z.object({
   status: engagementStatusSchema,
-  eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date de l'événement requise."),
+  eventDate: z.date(),
   content: z.string().trim().min(1, 'La note est requise.'),
-  externalSource: z.union([z.literal(''), z.string().trim().url('Lien invalide (URL attendue).')]),
+  externalSource: z.union([z.literal(''), z.url('Lien invalide (URL attendue).')]),
 });
-
-// Date du jour au format « YYYY-MM-DD » (fuseau local), pour pré-remplir le champ.
-function todayIsoDate(): string {
-  const now = new Date();
-  const offsetMs = now.getTimezoneOffset() * 60_000;
-  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
-}
 
 function DeliberationPicker({
   selected,
@@ -124,10 +121,17 @@ export function EngagementUpdateFormPage() {
 
   const [selectedDelib, setSelectedDelib] = useState<Deliberation | null>(null);
 
+  const selectStatutItems = STATUS_OPTIONS.map((status) => ({
+    value: status,
+    label: engagementStatusLabels[status],
+  }));
+
+  const [openDatePicker, setOpenDatePicker] = React.useState(false)
+
   const form = useForm({
     defaultValues: {
       status: 'en_cours' as EngagementStatus,
-      eventDate: todayIsoDate(),
+      eventDate: new Date(),
       content: '',
       externalSource: '',
     },
@@ -138,7 +142,7 @@ export function EngagementUpdateFormPage() {
       create.mutate(
         {
           status: value.status,
-          eventDate: value.eventDate,
+          eventDate: formatDateOnly(value.eventDate),
           content: value.content,
           deliberationId: selectedDelib?.id ?? null,
           externalSource: value.externalSource ? value.externalSource : null,
@@ -182,6 +186,7 @@ export function EngagementUpdateFormPage() {
               <Field>
                 <FieldLabel htmlFor={field.name}>Statut</FieldLabel>
                 <Select
+                  items={selectStatutItems}
                   value={field.state.value}
                   onValueChange={(value) => field.handleChange(value as EngagementStatus)}
                 >
@@ -189,9 +194,9 @@ export function EngagementUpdateFormPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {STATUS_OPTIONS.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {engagementStatusLabels[status]}
+                    {selectStatutItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -206,15 +211,43 @@ export function EngagementUpdateFormPage() {
               return (
                 <Field data-invalid={isInvalid}>
                   <FieldLabel htmlFor={field.name}>Date de l'événement</FieldLabel>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    type="date"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    aria-invalid={isInvalid}
-                  />
+                  <Popover open={openDatePicker} onOpenChange={setOpenDatePicker}>
+                    <PopoverTrigger render={
+                      <Button
+                        id={field.name}
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                        aria-invalid={isInvalid}
+                        onBlur={field.handleBlur}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+
+                        {field.state.value ? (
+                          field.state.value.toLocaleDateString('fr-FR', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                          })
+                        ) : (
+                          <span>Sélectionner une date</span>
+                        )}
+                      </Button>} />
+
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={field.state.value}
+                        required={true}
+                        onSelect={(date: Date) => {
+                          field.handleChange(z.date().parse(date));
+                          setOpenDatePicker(false);
+                        }}
+                        disabled={(date: Date) => date > new Date()}
+                        locale={fr}
+                        autoFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
               );
@@ -280,4 +313,11 @@ export function EngagementUpdateFormPage() {
       </form>
     </div>
   );
+}
+
+function formatDateOnly(d: Date): string {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
