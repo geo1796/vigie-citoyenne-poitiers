@@ -11,11 +11,11 @@ import (
 	"github.com/geo1796/vigie-citoyenne-poitiers/features/common/httpx"
 	"github.com/geo1796/vigie-citoyenne-poitiers/features/common/validatorx"
 	"github.com/geo1796/vigie-citoyenne-poitiers/features/deliberation"
-	"github.com/geo1796/vigie-citoyenne-poitiers/features/indicateur"
 	"github.com/geo1796/vigie-citoyenne-poitiers/postgres/dao"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // ---------- ListEngagements ----------
@@ -80,7 +80,7 @@ func (h *listEngagementsHandler) ListEngagements() http.HandlerFunc {
 			items[i] = Engagement{
 				ID:          row.ID,
 				Title:       row.Title,
-				Content:     row.Content,
+				Status:      Status(row.Status),
 				AuthorEmail: row.AuthorEmail,
 				CreatedAt:   row.CreatedAt,
 				UpdatedAt:   row.UpdatedAt,
@@ -110,9 +110,8 @@ func NewFindEngagementHandler(queries *dao.Queries) FindEngagementHandler {
 }
 
 type FindEngagementOutput struct {
-	Engagement    Engagement                  `json:"engagement"`
-	Deliberations []deliberation.Deliberation `json:"deliberations"`
-	Observations  []indicateur.Observation    `json:"observations"`
+	Engagement Engagement         `json:"engagement"`
+	Updates    []EngagementUpdate `json:"updates"`
 }
 
 func (h *findEngagementHandler) FindEngagement() http.HandlerFunc {
@@ -130,68 +129,59 @@ func (h *findEngagementHandler) FindEngagement() http.HandlerFunc {
 			return fmt.Errorf("FindEngagement failed: %w", err)
 		}
 
-		delibRows, err := h.queries.ListEngagementDeliberations(r.Context(), id)
+		updateRows, err := h.queries.ListEngagementUpdates(r.Context(), id)
 		if err != nil {
 			return fmt.Errorf("FindEngagement failed: %w", err)
 		}
 
-		deliberations := make([]deliberation.Deliberation, len(delibRows))
-		for i, d := range delibRows {
-			deliberations[i] = deliberation.Deliberation{
-				ID:               d.ID,
-				DelibID:          d.DelibID,
-				Collectivite:     deliberation.Collectivite(d.Collectivite),
-				Instance:         deliberation.Instance(d.Instance),
-				CollNom:          d.CollNom,
-				CollSiret:        d.CollSiret,
-				DelibDate:        d.DelibDate,
-				DelibMatiereCode: d.DelibMatiereCode,
-				DelibMatiereNom:  d.DelibMatiereNom,
-				DelibObjet:       d.DelibObjet,
-				PrefID:           d.PrefID,
-				PrefDate:         d.PrefDate,
-				VoteEffectif:     int(d.VoteEffectif),
-				VoteReel:         int(d.VoteReel),
-				VotePour:         int(d.VotePour),
-				VoteContre:       int(d.VoteContre),
-				VoteAbstention:   int(d.VoteAbstention),
-				CreatedAt:        d.CreatedAt,
-				UpdatedAt:        d.UpdatedAt,
+		// Hydratation des délibérations liées en une seule requête, plutôt qu'un
+		// LEFT JOIN à une vingtaine de colonnes nullables par mise à jour.
+		delibIDs := make([]uuid.UUID, 0, len(updateRows))
+		for _, u := range updateRows {
+			if u.DeliberationID != nil {
+				delibIDs = append(delibIDs, *u.DeliberationID)
 			}
 		}
 
-		obsRows, err := h.queries.ListEngagementObservations(r.Context(), id)
-		if err != nil {
-			return fmt.Errorf("FindEngagement failed: %w", err)
-		}
-
-		observations := make([]indicateur.Observation, len(obsRows))
-		for i, o := range obsRows {
-			var data map[string]any
-			if err = json.Unmarshal(o.Data, &data); err != nil {
+		delibByID := make(map[uuid.UUID]deliberation.Deliberation)
+		if len(delibIDs) > 0 {
+			delibRows, err := h.queries.ListDeliberationsByIDs(r.Context(), delibIDs)
+			if err != nil {
 				return fmt.Errorf("FindEngagement failed: %w", err)
 			}
-			observations[i] = indicateur.Observation{
-				ID:        o.ID,
-				Key:       indicateur.Key(o.Key),
-				Reference: o.Reference,
-				Data:      data,
-				CreatedAt: o.CreatedAt,
-				UpdatedAt: o.UpdatedAt,
+			for _, d := range delibRows {
+				delibByID[d.ID] = mapDeliberation(d)
 			}
+		}
+
+		updates := make([]EngagementUpdate, len(updateRows))
+		for i, u := range updateRows {
+			update := EngagementUpdate{
+				ID:             u.ID,
+				Status:         Status(u.Status),
+				Content:        u.Content,
+				ExternalSource: u.ExternalSource,
+				AuthorEmail:    u.AuthorEmail,
+				CreatedAt:      u.CreatedAt,
+			}
+			if u.DeliberationID != nil {
+				if d, ok := delibByID[*u.DeliberationID]; ok {
+					update.Deliberation = &d
+				}
+			}
+			updates[i] = update
 		}
 
 		return httpx.JSON(w, http.StatusOK, FindEngagementOutput{
 			Engagement: Engagement{
 				ID:          row.ID,
 				Title:       row.Title,
-				Content:     row.Content,
+				Status:      Status(row.Status),
 				AuthorEmail: row.AuthorEmail,
 				CreatedAt:   row.CreatedAt,
 				UpdatedAt:   row.UpdatedAt,
 			},
-			Deliberations: deliberations,
-			Observations:  observations,
+			Updates: updates,
 		})
 	})
 }
@@ -204,11 +194,10 @@ type CreateEngagementHandler interface {
 
 type createEngagementHandler struct {
 	queries *dao.Queries
-	service CreateEngagementService
 }
 
-func NewCreateEngagementHandler(queries *dao.Queries, service CreateEngagementService) CreateEngagementHandler {
-	return &createEngagementHandler{queries, service}
+func NewCreateEngagementHandler(queries *dao.Queries) CreateEngagementHandler {
+	return &createEngagementHandler{queries}
 }
 
 func (h *createEngagementHandler) CreateEngagement() http.HandlerFunc {
@@ -226,21 +215,130 @@ func (h *createEngagementHandler) CreateEngagement() http.HandlerFunc {
 			return httpx.NewError(http.StatusBadRequest, err.Error())
 		}
 
-		created, err := h.service.CreateEngagement(r.Context(), in, authedUser.ID)
+		created, err := h.queries.CreateEngagement(r.Context(), dao.CreateEngagementParams{
+			Title:     in.Title,
+			CreatedBy: authedUser.ID,
+		})
 		if err != nil {
-			if errors.Is(err, ErrInvalidReference) {
-				return httpx.NewError(http.StatusBadRequest, err.Error())
-			}
 			return fmt.Errorf("CreateEngagement failed: %w", err)
 		}
 
+		// Un engagement sans mise à jour est « en attente » par défaut.
 		return httpx.JSON(w, http.StatusCreated, Engagement{
 			ID:          created.ID,
 			Title:       created.Title,
-			Content:     created.Content,
+			Status:      StatusEnAttente,
 			AuthorEmail: authedUser.Email,
 			CreatedAt:   created.CreatedAt,
 			UpdatedAt:   created.UpdatedAt,
 		})
 	})
+}
+
+// ---------- CreateEngagementUpdate ----------
+
+type CreateEngagementUpdateHandler interface {
+	CreateEngagementUpdate() http.HandlerFunc
+}
+
+type createEngagementUpdateHandler struct {
+	queries *dao.Queries
+}
+
+func NewCreateEngagementUpdateHandler(queries *dao.Queries) CreateEngagementUpdateHandler {
+	return &createEngagementUpdateHandler{queries}
+}
+
+func (h *createEngagementUpdateHandler) CreateEngagementUpdate() http.HandlerFunc {
+	return httpx.Adapt(func(w http.ResponseWriter, r *http.Request) error {
+		authedUser, ok := r.Context().Value("authedUser").(auth.AuthedUser)
+		if !ok {
+			return httpx.NewError(http.StatusInternalServerError, "authedUser not present in context")
+		}
+
+		engagementID, err := uuid.Parse(chi.URLParam(r, "id"))
+		if err != nil {
+			return httpx.NewError(http.StatusBadRequest, err.Error())
+		}
+
+		var in CreateEngagementUpdateInput
+		if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+			return httpx.NewError(http.StatusBadRequest, err.Error())
+		}
+		if err := validatorx.Validate(in); err != nil {
+			return httpx.NewError(http.StatusBadRequest, err.Error())
+		}
+
+		// L'engagement doit exister : on renvoie 404 plutôt qu'une violation de
+		// clé étrangère opaque.
+		if _, err := h.queries.FindEngagementByID(r.Context(), engagementID); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return httpx.NewError(http.StatusNotFound, "engagement not found")
+			}
+			return fmt.Errorf("CreateEngagementUpdate failed: %w", err)
+		}
+
+		created, err := h.queries.CreateEngagementUpdate(r.Context(), dao.CreateEngagementUpdateParams{
+			EngagementID:   engagementID,
+			Status:         string(in.Status),
+			Content:        in.Content,
+			DeliberationID: in.DeliberationID,
+			ExternalSource: in.ExternalSource,
+			CreatedBy:      authedUser.ID,
+		})
+		if err != nil {
+			// Violation de clé étrangère : la délibération référencée n'existe pas.
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+				return httpx.NewError(http.StatusBadRequest, "invalid deliberation reference")
+			}
+			return fmt.Errorf("CreateEngagementUpdate failed: %w", err)
+		}
+
+		out := EngagementUpdate{
+			ID:             created.ID,
+			Status:         Status(created.Status),
+			Content:        created.Content,
+			ExternalSource: created.ExternalSource,
+			AuthorEmail:    authedUser.Email,
+			CreatedAt:      created.CreatedAt,
+		}
+		if created.DeliberationID != nil {
+			delibRows, err := h.queries.ListDeliberationsByIDs(r.Context(), []uuid.UUID{*created.DeliberationID})
+			if err != nil {
+				return fmt.Errorf("CreateEngagementUpdate failed: %w", err)
+			}
+			if len(delibRows) > 0 {
+				d := mapDeliberation(delibRows[0])
+				out.Deliberation = &d
+			}
+		}
+
+		return httpx.JSON(w, http.StatusCreated, out)
+	})
+}
+
+// mapDeliberation convertit une ligne DAO en DTO public de délibération.
+func mapDeliberation(d dao.ListDeliberationsByIDsRow) deliberation.Deliberation {
+	return deliberation.Deliberation{
+		ID:               d.ID,
+		DelibID:          d.DelibID,
+		Collectivite:     deliberation.Collectivite(d.Collectivite),
+		Instance:         deliberation.Instance(d.Instance),
+		CollNom:          d.CollNom,
+		CollSiret:        d.CollSiret,
+		DelibDate:        d.DelibDate,
+		DelibMatiereCode: d.DelibMatiereCode,
+		DelibMatiereNom:  d.DelibMatiereNom,
+		DelibObjet:       d.DelibObjet,
+		PrefID:           d.PrefID,
+		PrefDate:         d.PrefDate,
+		VoteEffectif:     int(d.VoteEffectif),
+		VoteReel:         int(d.VoteReel),
+		VotePour:         int(d.VotePour),
+		VoteContre:       int(d.VoteContre),
+		VoteAbstention:   int(d.VoteAbstention),
+		CreatedAt:        d.CreatedAt,
+		UpdatedAt:        d.UpdatedAt,
+	}
 }

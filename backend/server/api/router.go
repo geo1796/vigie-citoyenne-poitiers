@@ -38,7 +38,7 @@ func Router(
 	})
 
 	r.Mount("/deliberations", deliberation.Router(store.Queries()))
-	r.Mount("/engagements", engagement.Router(store, accessTokenManager))
+	r.Mount("/engagements", engagement.Router(store.Queries(), accessTokenManager))
 	r.Mount("/indicateurs", indicateur.Router(store.Queries()))
 	r.Mount("/auth", auth.Router(
 		store,

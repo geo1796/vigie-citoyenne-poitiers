@@ -86,16 +86,28 @@ LIMIT sqlc.arg('limit')
 OFFSET sqlc.arg('offset');
 
 -- name: FindDeliberationByID :one
-SELECT 
+SELECT
     id, delib_id, documents,
-    collectivite, instance, 
-    coll_nom, coll_siret, 
-    delib_date, delib_objet, delib_matiere_code, delib_matiere_nom, 
-    pref_id, pref_date, 
+    collectivite, instance,
+    coll_nom, coll_siret,
+    delib_date, delib_objet, delib_matiere_code, delib_matiere_nom,
+    pref_id, pref_date,
     vote_effectif, vote_reel, vote_pour, vote_contre, vote_abstention,
-    created_at, updated_at 
+    created_at, updated_at
 FROM app.deliberations
 WHERE id = $1;
+
+-- name: ListDeliberationsByIDs :many
+SELECT
+    id, delib_id,
+    collectivite, instance,
+    coll_nom, coll_siret,
+    delib_date, delib_objet, delib_matiere_code, delib_matiere_nom,
+    pref_id, pref_date,
+    vote_effectif, vote_reel, vote_pour, vote_contre, vote_abstention,
+    created_at, updated_at
+FROM app.deliberations
+WHERE id = ANY(@ids::uuid[]);
 
 -- name: ListDeliberationsWithoutDocuments :many
 SELECT id, delib_id, instance

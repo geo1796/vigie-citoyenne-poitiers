@@ -37,20 +37,21 @@ type AppDeliberation struct {
 type AppEngagement struct {
 	ID        uuid.UUID
 	Title     string
-	Content   string
 	CreatedBy uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
-type AppEngagementDeliberation struct {
+type AppEngagementUpdate struct {
+	ID             uuid.UUID
 	EngagementID   uuid.UUID
-	DeliberationID uuid.UUID
-}
-
-type AppEngagementIndicateurObservation struct {
-	EngagementID  uuid.UUID
-	ObservationID uuid.UUID
+	Status         string
+	Content        string
+	DeliberationID *uuid.UUID
+	ExternalSource *string
+	CreatedBy      uuid.UUID
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type AppIndicateurObservation struct {

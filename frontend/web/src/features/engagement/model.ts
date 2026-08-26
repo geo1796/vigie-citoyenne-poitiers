@@ -1,17 +1,39 @@
 import { z } from 'zod';
 import { deliberationSchema } from '@/features/deliberations/model';
-import { observationSchema } from '@/features/indicateurs/model';
+
+export const engagementStatusSchema = z.enum(['en_attente', 'en_cours', 'tenu', 'rompu']);
+
+export type EngagementStatus = z.infer<typeof engagementStatusSchema>;
+
+export const engagementStatusLabels: Record<EngagementStatus, string> = {
+  en_attente: 'En attente',
+  en_cours: 'En cours',
+  tenu: 'Tenu',
+  rompu: 'Rompu',
+};
 
 export const engagementSchema = z.object({
   id: z.uuid(),
   title: z.string(),
-  content: z.string(),
+  status: engagementStatusSchema,
   authorEmail: z.string(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
 
 export type Engagement = z.infer<typeof engagementSchema>;
+
+export const engagementUpdateSchema = z.object({
+  id: z.uuid(),
+  status: engagementStatusSchema,
+  content: z.string(),
+  externalSource: z.string().nullable(),
+  deliberation: deliberationSchema.nullable(),
+  authorEmail: z.string(),
+  createdAt: z.coerce.date(),
+});
+
+export type EngagementUpdate = z.infer<typeof engagementUpdateSchema>;
 
 export const listEngagementsParamsSchema = z.object({
   limit: z.number().int().min(1).max(100).default(25),
@@ -30,17 +52,22 @@ export type ListEngagementsResult = z.infer<typeof listEngagementsResultSchema>;
 
 export const findEngagementResultSchema = z.object({
   engagement: engagementSchema,
-  deliberations: z.array(deliberationSchema),
-  observations: z.array(observationSchema),
+  updates: z.array(engagementUpdateSchema),
 });
 
 export type FindEngagementResult = z.infer<typeof findEngagementResultSchema>;
 
 export const createEngagementInputSchema = z.object({
   title: z.string().trim().min(1, 'Le titre est requis.'),
-  content: z.string().trim().min(1, 'Le contenu est requis.'),
-  deliberationIds: z.array(z.uuid()).default([]),
-  observationIds: z.array(z.uuid()).default([]),
 });
 
 export type CreateEngagementInput = z.infer<typeof createEngagementInputSchema>;
+
+export const createEngagementUpdateInputSchema = z.object({
+  status: engagementStatusSchema,
+  content: z.string().trim().min(1, 'La note est requise.'),
+  deliberationId: z.uuid().nullish(),
+  externalSource: z.string().trim().url('Lien invalide.').nullish(),
+});
+
+export type CreateEngagementUpdateInput = z.infer<typeof createEngagementUpdateInputSchema>;

@@ -3,15 +3,29 @@ package engagement
 import (
 	"time"
 
+	"github.com/geo1796/vigie-citoyenne-poitiers/features/deliberation"
 	"github.com/google/uuid"
 )
 
+// Status décrit l'état d'avancement d'un engagement à un instant donné.
+// Il est porté par les mises à jour (engagement_updates) ; le statut « courant »
+// d'un engagement est celui de sa mise à jour la plus récente.
+type Status string
+
+const (
+	StatusEnAttente Status = "en_attente"
+	StatusEnCours   Status = "en_cours"
+	StatusTenu      Status = "tenu"
+	StatusRompu     Status = "rompu"
+)
+
 // Engagement est la représentation publique d'un engagement de campagne.
+// Son `Status` est dérivé de la mise à jour la plus récente (défaut « en_attente »).
 type Engagement struct {
 	ID uuid.UUID `json:"id"`
 
-	Title   string `json:"title"`
-	Content string `json:"content"`
+	Title  string `json:"title"`
+	Status Status `json:"status"`
 
 	AuthorEmail string `json:"authorEmail"`
 
@@ -19,12 +33,36 @@ type Engagement struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+// EngagementUpdate est une entrée de la timeline d'un engagement : elle justifie
+// un statut et référence, de façon optionnelle et indépendante, une délibération
+// et/ou une source externe (ex. un article de presse).
+type EngagementUpdate struct {
+	ID uuid.UUID `json:"id"`
+
+	Status  Status `json:"status"`
+	Content string `json:"content"`
+
+	ExternalSource *string                    `json:"externalSource"`
+	Deliberation   *deliberation.Deliberation `json:"deliberation"`
+
+	AuthorEmail string `json:"authorEmail"`
+
+	CreatedAt time.Time `json:"createdAt"`
+}
+
 // CreateEngagementInput est le corps attendu pour la création d'un engagement.
-// Les listes d'identifiants sont optionnelles : un engagement peut n'être lié à
-// aucune délibération ni observation.
+// Un engagement n'est qu'un intitulé ; son avancement se documente ensuite via
+// des mises à jour.
 type CreateEngagementInput struct {
-	Title           string      `json:"title" validate:"required"`
-	Content         string      `json:"content" validate:"required"`
-	DeliberationIDs []uuid.UUID `json:"deliberationIds"`
-	ObservationIDs  []uuid.UUID `json:"observationIds"`
+	Title string `json:"title" validate:"required"`
+}
+
+// CreateEngagementUpdateInput est le corps attendu pour l'ajout d'une mise à jour.
+// La note (`content`) est obligatoire ; la délibération et la source externe sont
+// toutes deux optionnelles.
+type CreateEngagementUpdateInput struct {
+	Status         Status     `json:"status" validate:"required,oneof=en_attente en_cours tenu rompu"`
+	Content        string     `json:"content" validate:"required"`
+	DeliberationID *uuid.UUID `json:"deliberationId"`
+	ExternalSource *string    `json:"externalSource" validate:"omitempty,url"`
 }

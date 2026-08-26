@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader } from '@/shadcn/components/ui/card';
 import type { Engagement } from '../model';
+import { EngagementStatusBadge } from './EngagementStatusBadge';
 
 type Props = {
   engagement: Engagement;
@@ -23,12 +24,14 @@ export function EngagementCard({ engagement: e }: Props) {
     >
       <Card>
         <CardHeader className="space-y-3">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Engagement</div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Engagement</div>
+            <EngagementStatusBadge status={e.status} />
+          </div>
           <h3 className="text-lg font-semibold leading-snug tracking-tight">{e.title}</h3>
         </CardHeader>
 
-        <CardContent className="space-y-3">
-          <p className="line-clamp-3 text-sm text-muted-foreground">{e.content}</p>
+        <CardContent>
           <div className="text-xs text-muted-foreground">Ajouté le {formatDate(e.createdAt)}</div>
         </CardContent>
       </Card>
