@@ -23,7 +23,7 @@ LEFT JOIN LATERAL (
     SELECT eu.status
     FROM app.engagement_updates eu
     WHERE eu.engagement_id = e.id
-    ORDER BY eu.created_at DESC, eu.id DESC
+    ORDER BY eu.event_date DESC, eu.id DESC
     LIMIT 1
 ) latest ON TRUE
 ORDER BY e.created_at DESC, e.id
@@ -45,7 +45,7 @@ LEFT JOIN LATERAL (
     SELECT eu.status
     FROM app.engagement_updates eu
     WHERE eu.engagement_id = e.id
-    ORDER BY eu.created_at DESC, eu.id DESC
+    ORDER BY eu.event_date DESC, eu.id DESC
     LIMIT 1
 ) latest ON TRUE
 WHERE e.id = $1;
