@@ -10,125 +10,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
 var (
 	ErrBatchAlreadyClosed = errors.New("batch already closed")
 )
-
-const linkEngagementDeliberations = `-- name: LinkEngagementDeliberations :batchexec
-INSERT INTO app.engagement_deliberations (
-    engagement_id,
-    deliberation_id
-) VALUES (
-    $1,
-    $2
-)
-ON CONFLICT DO NOTHING
-`
-
-type LinkEngagementDeliberationsBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type LinkEngagementDeliberationsParams struct {
-	EngagementID   uuid.UUID
-	DeliberationID uuid.UUID
-}
-
-func (q *Queries) LinkEngagementDeliberations(ctx context.Context, arg []LinkEngagementDeliberationsParams) *LinkEngagementDeliberationsBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.EngagementID,
-			a.DeliberationID,
-		}
-		batch.Queue(linkEngagementDeliberations, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &LinkEngagementDeliberationsBatchResults{br, len(arg), false}
-}
-
-func (b *LinkEngagementDeliberationsBatchResults) Exec(f func(int, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		if b.closed {
-			if f != nil {
-				f(t, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		_, err := b.br.Exec()
-		if f != nil {
-			f(t, err)
-		}
-	}
-}
-
-func (b *LinkEngagementDeliberationsBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
-
-const linkEngagementObservations = `-- name: LinkEngagementObservations :batchexec
-INSERT INTO app.engagement_indicateur_observations (
-    engagement_id,
-    observation_id
-) VALUES (
-    $1,
-    $2
-)
-ON CONFLICT DO NOTHING
-`
-
-type LinkEngagementObservationsBatchResults struct {
-	br     pgx.BatchResults
-	tot    int
-	closed bool
-}
-
-type LinkEngagementObservationsParams struct {
-	EngagementID  uuid.UUID
-	ObservationID uuid.UUID
-}
-
-func (q *Queries) LinkEngagementObservations(ctx context.Context, arg []LinkEngagementObservationsParams) *LinkEngagementObservationsBatchResults {
-	batch := &pgx.Batch{}
-	for _, a := range arg {
-		vals := []interface{}{
-			a.EngagementID,
-			a.ObservationID,
-		}
-		batch.Queue(linkEngagementObservations, vals...)
-	}
-	br := q.db.SendBatch(ctx, batch)
-	return &LinkEngagementObservationsBatchResults{br, len(arg), false}
-}
-
-func (b *LinkEngagementObservationsBatchResults) Exec(f func(int, error)) {
-	defer b.br.Close()
-	for t := 0; t < b.tot; t++ {
-		if b.closed {
-			if f != nil {
-				f(t, ErrBatchAlreadyClosed)
-			}
-			continue
-		}
-		_, err := b.br.Exec()
-		if f != nil {
-			f(t, err)
-		}
-	}
-}
-
-func (b *LinkEngagementObservationsBatchResults) Close() error {
-	b.closed = true
-	return b.br.Close()
-}
 
 const upsertDeliberations = `-- name: UpsertDeliberations :batchexec
 INSERT INTO app.deliberations (

@@ -13,14 +13,14 @@ import (
 )
 
 const findDeliberationByID = `-- name: FindDeliberationByID :one
-SELECT 
+SELECT
     id, delib_id, documents,
-    collectivite, instance, 
-    coll_nom, coll_siret, 
-    delib_date, delib_objet, delib_matiere_code, delib_matiere_nom, 
-    pref_id, pref_date, 
+    collectivite, instance,
+    coll_nom, coll_siret,
+    delib_date, delib_objet, delib_matiere_code, delib_matiere_nom,
+    pref_id, pref_date,
     vote_effectif, vote_reel, vote_pour, vote_contre, vote_abstention,
-    created_at, updated_at 
+    created_at, updated_at
 FROM app.deliberations
 WHERE id = $1
 `
@@ -162,6 +162,81 @@ func (q *Queries) ListDeliberations(ctx context.Context, arg ListDeliberationsPa
 	var items []ListDeliberationsRow
 	for rows.Next() {
 		var i ListDeliberationsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.DelibID,
+			&i.Collectivite,
+			&i.Instance,
+			&i.CollNom,
+			&i.CollSiret,
+			&i.DelibDate,
+			&i.DelibObjet,
+			&i.DelibMatiereCode,
+			&i.DelibMatiereNom,
+			&i.PrefID,
+			&i.PrefDate,
+			&i.VoteEffectif,
+			&i.VoteReel,
+			&i.VotePour,
+			&i.VoteContre,
+			&i.VoteAbstention,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDeliberationsByIDs = `-- name: ListDeliberationsByIDs :many
+SELECT
+    id, delib_id,
+    collectivite, instance,
+    coll_nom, coll_siret,
+    delib_date, delib_objet, delib_matiere_code, delib_matiere_nom,
+    pref_id, pref_date,
+    vote_effectif, vote_reel, vote_pour, vote_contre, vote_abstention,
+    created_at, updated_at
+FROM app.deliberations
+WHERE id = ANY($1::uuid[])
+`
+
+type ListDeliberationsByIDsRow struct {
+	ID               uuid.UUID
+	DelibID          string
+	Collectivite     string
+	Instance         string
+	CollNom          string
+	CollSiret        string
+	DelibDate        time.Time
+	DelibObjet       string
+	DelibMatiereCode string
+	DelibMatiereNom  string
+	PrefID           *string
+	PrefDate         *time.Time
+	VoteEffectif     int32
+	VoteReel         int32
+	VotePour         int32
+	VoteContre       int32
+	VoteAbstention   int32
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
+func (q *Queries) ListDeliberationsByIDs(ctx context.Context, ids []uuid.UUID) ([]ListDeliberationsByIDsRow, error) {
+	rows, err := q.db.Query(ctx, listDeliberationsByIDs, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDeliberationsByIDsRow
+	for rows.Next() {
+		var i ListDeliberationsByIDsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.DelibID,

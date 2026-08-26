@@ -9,8 +9,11 @@ import { toast } from 'sonner';
 import { api } from '@/api';
 import {
   type CreateEngagementInput,
+  type CreateEngagementUpdateInput,
   type Engagement,
+  type EngagementUpdate,
   engagementSchema,
+  engagementUpdateSchema,
   type FindEngagementResult,
   findEngagementResultSchema,
   type ListEngagementsParams,
@@ -65,10 +68,26 @@ export const useCreateEngagement = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['engagements'] });
     },
+    onError: () => {
+      toast.error('Une erreur est survenue. Réessayez dans un instant.');
+    },
+  });
+};
+
+export const useCreateEngagementUpdate = (engagementId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreateEngagementUpdateInput): Promise<EngagementUpdate> => {
+      const raw = await api.post(`engagements/${engagementId}/updates`, { json: input }).json();
+      return engagementUpdateSchema.parse(raw);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['engagements'] });
+    },
     onError: (err) => {
       const message =
         err instanceof HTTPError && err.response.status === 400
-          ? 'Vérifiez les champs : une délibération ou observation liée est invalide.'
+          ? 'Vérifiez les champs : la délibération liée ou le lien externe est invalide.'
           : 'Une erreur est survenue. Réessayez dans un instant.';
       toast.error(message);
     },

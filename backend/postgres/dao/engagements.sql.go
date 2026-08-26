@@ -15,29 +15,78 @@ import (
 const createEngagement = `-- name: CreateEngagement :one
 INSERT INTO app.engagements (
     title,
-    content,
     created_by
 ) VALUES (
     $1,
-    $2,
-    $3
+    $2
 )
-RETURNING id, title, content, created_by, created_at, updated_at
+RETURNING id, title, created_by, created_at, updated_at
 `
 
 type CreateEngagementParams struct {
 	Title     string
-	Content   string
 	CreatedBy uuid.UUID
 }
 
 func (q *Queries) CreateEngagement(ctx context.Context, arg CreateEngagementParams) (AppEngagement, error) {
-	row := q.db.QueryRow(ctx, createEngagement, arg.Title, arg.Content, arg.CreatedBy)
+	row := q.db.QueryRow(ctx, createEngagement, arg.Title, arg.CreatedBy)
 	var i AppEngagement
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createEngagementUpdate = `-- name: CreateEngagementUpdate :one
+INSERT INTO app.engagement_updates (
+    engagement_id,
+    status,
+    content,
+    deliberation_id,
+    external_source,
+    created_by
+) VALUES (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6
+)
+RETURNING id, engagement_id, status, content, deliberation_id, external_source,
+    created_by, created_at, updated_at
+`
+
+type CreateEngagementUpdateParams struct {
+	EngagementID   uuid.UUID
+	Status         string
+	Content        string
+	DeliberationID *uuid.UUID
+	ExternalSource *string
+	CreatedBy      uuid.UUID
+}
+
+func (q *Queries) CreateEngagementUpdate(ctx context.Context, arg CreateEngagementUpdateParams) (AppEngagementUpdate, error) {
+	row := q.db.QueryRow(ctx, createEngagementUpdate,
+		arg.EngagementID,
+		arg.Status,
+		arg.Content,
+		arg.DeliberationID,
+		arg.ExternalSource,
+		arg.CreatedBy,
+	)
+	var i AppEngagementUpdate
+	err := row.Scan(
+		&i.ID,
+		&i.EngagementID,
+		&i.Status,
 		&i.Content,
+		&i.DeliberationID,
+		&i.ExternalSource,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -47,22 +96,30 @@ func (q *Queries) CreateEngagement(ctx context.Context, arg CreateEngagementPara
 
 const findEngagementByID = `-- name: FindEngagementByID :one
 SELECT
-    e.id, e.title, e.content,
+    e.id, e.title,
     e.created_by, u.email AS author_email,
-    e.created_at, e.updated_at
+    e.created_at, e.updated_at,
+    COALESCE(latest.status, 'en_attente') AS status
 FROM app.engagements e
 JOIN app.users u ON u.id = e.created_by
+LEFT JOIN LATERAL (
+    SELECT eu.status
+    FROM app.engagement_updates eu
+    WHERE eu.engagement_id = e.id
+    ORDER BY eu.created_at DESC, eu.id DESC
+    LIMIT 1
+) latest ON TRUE
 WHERE e.id = $1
 `
 
 type FindEngagementByIDRow struct {
 	ID          uuid.UUID
 	Title       string
-	Content     string
 	CreatedBy   uuid.UUID
 	AuthorEmail string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	Status      string
 }
 
 func (q *Queries) FindEngagementByID(ctx context.Context, id uuid.UUID) (FindEngagementByIDRow, error) {
@@ -71,116 +128,54 @@ func (q *Queries) FindEngagementByID(ctx context.Context, id uuid.UUID) (FindEng
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
-		&i.Content,
 		&i.CreatedBy,
 		&i.AuthorEmail,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Status,
 	)
 	return i, err
 }
 
-const listEngagementDeliberations = `-- name: ListEngagementDeliberations :many
+const listEngagementUpdates = `-- name: ListEngagementUpdates :many
 SELECT
-    d.id, d.delib_id,
-    d.collectivite, d.instance,
-    d.coll_nom, d.coll_siret,
-    d.delib_date, d.delib_objet, d.delib_matiere_code, d.delib_matiere_nom,
-    d.pref_id, d.pref_date,
-    d.vote_effectif, d.vote_reel, d.vote_pour, d.vote_contre, d.vote_abstention,
-    d.created_at, d.updated_at
-FROM app.engagement_deliberations ed
-JOIN app.deliberations d ON d.id = ed.deliberation_id
-WHERE ed.engagement_id = $1
-ORDER BY d.delib_date DESC, d.id
+    eu.id, eu.status, eu.content, eu.external_source, eu.deliberation_id,
+    eu.created_by, u.email AS author_email, eu.created_at
+FROM app.engagement_updates eu
+JOIN app.users u ON u.id = eu.created_by
+WHERE eu.engagement_id = $1
+ORDER BY eu.created_at DESC, eu.id DESC
 `
 
-type ListEngagementDeliberationsRow struct {
-	ID               uuid.UUID
-	DelibID          string
-	Collectivite     string
-	Instance         string
-	CollNom          string
-	CollSiret        string
-	DelibDate        time.Time
-	DelibObjet       string
-	DelibMatiereCode string
-	DelibMatiereNom  string
-	PrefID           *string
-	PrefDate         *time.Time
-	VoteEffectif     int32
-	VoteReel         int32
-	VotePour         int32
-	VoteContre       int32
-	VoteAbstention   int32
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+type ListEngagementUpdatesRow struct {
+	ID             uuid.UUID
+	Status         string
+	Content        string
+	ExternalSource *string
+	DeliberationID *uuid.UUID
+	CreatedBy      uuid.UUID
+	AuthorEmail    string
+	CreatedAt      time.Time
 }
 
-func (q *Queries) ListEngagementDeliberations(ctx context.Context, engagementID uuid.UUID) ([]ListEngagementDeliberationsRow, error) {
-	rows, err := q.db.Query(ctx, listEngagementDeliberations, engagementID)
+func (q *Queries) ListEngagementUpdates(ctx context.Context, engagementID uuid.UUID) ([]ListEngagementUpdatesRow, error) {
+	rows, err := q.db.Query(ctx, listEngagementUpdates, engagementID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListEngagementDeliberationsRow
+	var items []ListEngagementUpdatesRow
 	for rows.Next() {
-		var i ListEngagementDeliberationsRow
+		var i ListEngagementUpdatesRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.DelibID,
-			&i.Collectivite,
-			&i.Instance,
-			&i.CollNom,
-			&i.CollSiret,
-			&i.DelibDate,
-			&i.DelibObjet,
-			&i.DelibMatiereCode,
-			&i.DelibMatiereNom,
-			&i.PrefID,
-			&i.PrefDate,
-			&i.VoteEffectif,
-			&i.VoteReel,
-			&i.VotePour,
-			&i.VoteContre,
-			&i.VoteAbstention,
+			&i.Status,
+			&i.Content,
+			&i.ExternalSource,
+			&i.DeliberationID,
+			&i.CreatedBy,
+			&i.AuthorEmail,
 			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listEngagementObservations = `-- name: ListEngagementObservations :many
-SELECT o.id, o.key, o.reference, o.data, o.created_at, o.updated_at
-FROM app.engagement_indicateur_observations eio
-JOIN app.indicateur_observations o ON o.id = eio.observation_id
-WHERE eio.engagement_id = $1
-ORDER BY o.key, o.reference ASC
-`
-
-func (q *Queries) ListEngagementObservations(ctx context.Context, engagementID uuid.UUID) ([]AppIndicateurObservation, error) {
-	rows, err := q.db.Query(ctx, listEngagementObservations, engagementID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []AppIndicateurObservation
-	for rows.Next() {
-		var i AppIndicateurObservation
-		if err := rows.Scan(
-			&i.ID,
-			&i.Key,
-			&i.Reference,
-			&i.Data,
-			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -194,11 +189,19 @@ func (q *Queries) ListEngagementObservations(ctx context.Context, engagementID u
 
 const listEngagements = `-- name: ListEngagements :many
 SELECT
-    e.id, e.title, e.content,
+    e.id, e.title,
     e.created_by, u.email AS author_email,
-    e.created_at, e.updated_at
+    e.created_at, e.updated_at,
+    COALESCE(latest.status, 'en_attente') AS status
 FROM app.engagements e
 JOIN app.users u ON u.id = e.created_by
+LEFT JOIN LATERAL (
+    SELECT eu.status
+    FROM app.engagement_updates eu
+    WHERE eu.engagement_id = e.id
+    ORDER BY eu.created_at DESC, eu.id DESC
+    LIMIT 1
+) latest ON TRUE
 ORDER BY e.created_at DESC, e.id
 LIMIT $2
 OFFSET $1
@@ -212,11 +215,11 @@ type ListEngagementsParams struct {
 type ListEngagementsRow struct {
 	ID          uuid.UUID
 	Title       string
-	Content     string
 	CreatedBy   uuid.UUID
 	AuthorEmail string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	Status      string
 }
 
 func (q *Queries) ListEngagements(ctx context.Context, arg ListEngagementsParams) ([]ListEngagementsRow, error) {
@@ -231,11 +234,11 @@ func (q *Queries) ListEngagements(ctx context.Context, arg ListEngagementsParams
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,
-			&i.Content,
 			&i.CreatedBy,
 			&i.AuthorEmail,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Status,
 		); err != nil {
 			return nil, err
 		}
