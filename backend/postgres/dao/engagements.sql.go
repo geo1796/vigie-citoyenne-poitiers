@@ -147,6 +147,31 @@ func (q *Queries) FindEngagementByID(ctx context.Context, id uuid.UUID) (FindEng
 	return i, err
 }
 
+const findEngagementUpdateByID = `-- name: FindEngagementUpdateByID :one
+SELECT id, engagement_id, status, content, event_date, deliberation_id,
+    external_source, created_by, created_at, updated_at
+FROM app.engagement_updates
+WHERE id = $1
+`
+
+func (q *Queries) FindEngagementUpdateByID(ctx context.Context, id uuid.UUID) (AppEngagementUpdate, error) {
+	row := q.db.QueryRow(ctx, findEngagementUpdateByID, id)
+	var i AppEngagementUpdate
+	err := row.Scan(
+		&i.ID,
+		&i.EngagementID,
+		&i.Status,
+		&i.Content,
+		&i.EventDate,
+		&i.DeliberationID,
+		&i.ExternalSource,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listEngagementUpdates = `-- name: ListEngagementUpdates :many
 SELECT
     eu.id, eu.status, eu.content, eu.event_date, eu.external_source, eu.deliberation_id,
@@ -265,4 +290,50 @@ func (q *Queries) ListEngagements(ctx context.Context, arg ListEngagementsParams
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateEngagementUpdate = `-- name: UpdateEngagementUpdate :one
+UPDATE app.engagement_updates
+SET status = $1,
+    content = $2,
+    event_date = $3,
+    deliberation_id = $4,
+    external_source = $5
+WHERE id = $6
+RETURNING id, engagement_id, status, content, event_date, deliberation_id, external_source,
+    created_by, created_at, updated_at
+`
+
+type UpdateEngagementUpdateParams struct {
+	Status         string
+	Content        string
+	EventDate      time.Time
+	DeliberationID *uuid.UUID
+	ExternalSource *string
+	ID             uuid.UUID
+}
+
+func (q *Queries) UpdateEngagementUpdate(ctx context.Context, arg UpdateEngagementUpdateParams) (AppEngagementUpdate, error) {
+	row := q.db.QueryRow(ctx, updateEngagementUpdate,
+		arg.Status,
+		arg.Content,
+		arg.EventDate,
+		arg.DeliberationID,
+		arg.ExternalSource,
+		arg.ID,
+	)
+	var i AppEngagementUpdate
+	err := row.Scan(
+		&i.ID,
+		&i.EngagementID,
+		&i.Status,
+		&i.Content,
+		&i.EventDate,
+		&i.DeliberationID,
+		&i.ExternalSource,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

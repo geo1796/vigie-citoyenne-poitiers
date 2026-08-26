@@ -75,3 +75,15 @@ type CreateEngagementUpdateInput struct {
 	DeliberationID *uuid.UUID `json:"deliberationId"`
 	ExternalSource *string    `json:"externalSource" validate:"omitempty,url"`
 }
+
+// UpdateEngagementUpdateInput est le corps attendu pour la modification d'une mise à jour.
+// Les cinq champs sont remplacés à chaque appel (sémantique PUT) ; les mêmes règles de
+// validation que la création s'appliquent.
+type UpdateEngagementUpdateInput struct {
+	Status Status `json:"status" validate:"required,oneof=en_attente en_cours tenu rompu"`
+	// EventDate est attendue au format ISO « YYYY-MM-DD ».
+	EventDate      string     `json:"eventDate" validate:"required"`
+	Content        string     `json:"content" validate:"required"`
+	DeliberationID *uuid.UUID `json:"deliberationId"`
+	ExternalSource *string    `json:"externalSource" validate:"omitempty,url"`
+}

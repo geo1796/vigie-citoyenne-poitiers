@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Link, useRouter } from '@tanstack/react-router';
-import { ArrowLeft, ExternalLink, Plus } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Pencil, Plus } from 'lucide-react';
 import { useSession } from '@/features/auth/api';
 import { DeliberationCard } from '@/features/deliberations/components/DeliberationCard';
 import { Route } from '@/routes/engagements/$engagementId';
@@ -10,12 +10,36 @@ import type { EngagementUpdate } from '../model';
 import { formatLongDate } from '../utils';
 import { EngagementStatusBadge } from './EngagementStatusBadge';
 
-function UpdateItem({ update }: { update: EngagementUpdate }) {
+function UpdateItem({
+  update,
+  engagementId,
+  canEdit,
+}: {
+  update: EngagementUpdate;
+  engagementId: string;
+  canEdit: boolean;
+}) {
   return (
     <li className="border-l-2 border-border pl-4">
       <div className="flex flex-wrap items-center gap-2">
         <EngagementStatusBadge status={update.status} />
         <span className="text-xs text-muted-foreground">{formatLongDate(update.eventDate)}</span>
+        {canEdit && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="ml-auto h-7 gap-1.5 px-2 text-xs text-muted-foreground"
+            render={
+              <Link
+                to="/espace-contributeur/engagements/$engagementId/updates/$updateId"
+                params={{ engagementId, updateId: update.id }}
+              >
+                <Pencil className="size-3.5" />
+                Modifier
+              </Link>
+            }
+          />
+        )}
       </div>
 
       <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
@@ -48,6 +72,7 @@ export function EngagementPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const isContributeur = session?.roles.includes('contributeur') ?? false;
+  const sessionEmail = session?.email;
   const { data } = useSuspenseQuery(engagementsQueries.detail(engagementId));
 
   const { engagement, updates } = data;
@@ -111,7 +136,12 @@ export function EngagementPage() {
         ) : (
           <ul className="space-y-8">
             {updates.map((u) => (
-              <UpdateItem key={u.id} update={u} />
+              <UpdateItem
+                key={u.id}
+                update={u}
+                engagementId={engagementId}
+                canEdit={isContributeur && sessionEmail === u.authorEmail}
+              />
             ))}
           </ul>
         )}

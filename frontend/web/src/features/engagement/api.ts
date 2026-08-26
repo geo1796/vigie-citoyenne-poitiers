@@ -93,3 +93,25 @@ export const useCreateEngagementUpdate = (engagementId: string) => {
     },
   });
 };
+
+export const useUpdateEngagementUpdate = (engagementId: string, updateId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreateEngagementUpdateInput): Promise<EngagementUpdate> => {
+      const raw = await api
+        .put(`engagements/${engagementId}/updates/${updateId}`, { json: input })
+        .json();
+      return engagementUpdateSchema.parse(raw);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['engagements'] });
+    },
+    onError: (err) => {
+      const message =
+        err instanceof HTTPError && err.response.status === 400
+          ? 'Vérifiez les champs : la délibération liée ou le lien externe est invalide.'
+          : 'Une erreur est survenue. Réessayez dans un instant.';
+      toast.error(message);
+    },
+  });
+};

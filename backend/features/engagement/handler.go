@@ -329,6 +329,100 @@ func (h *createEngagementUpdateHandler) CreateEngagementUpdate() http.HandlerFun
 	})
 }
 
+// ---------- UpdateEngagementUpdate ----------
+
+type UpdateEngagementUpdateHandler interface {
+	UpdateEngagementUpdate() http.HandlerFunc
+}
+
+type updateEngagementUpdateHandler struct {
+	queries *dao.Queries
+}
+
+func NewUpdateEngagementUpdateHandler(queries *dao.Queries) UpdateEngagementUpdateHandler {
+	return &updateEngagementUpdateHandler{queries}
+}
+
+func (h *updateEngagementUpdateHandler) UpdateEngagementUpdate() http.HandlerFunc {
+	return httpx.Adapt(func(w http.ResponseWriter, r *http.Request) error {
+		authedUser, ok := r.Context().Value("authedUser").(auth.AuthedUser)
+		if !ok {
+			return httpx.NewError(http.StatusInternalServerError, "authedUser not present in context")
+		}
+
+		updateID, err := uuid.Parse(chi.URLParam(r, "updateId"))
+		if err != nil {
+			return httpx.NewError(http.StatusBadRequest, err.Error())
+		}
+
+		var in UpdateEngagementUpdateInput
+		if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+			return httpx.NewError(http.StatusBadRequest, err.Error())
+		}
+		if err := validatorx.Validate(in); err != nil {
+			return httpx.NewError(http.StatusBadRequest, err.Error())
+		}
+
+		eventDate, err := time.Parse("2006-01-02", in.EventDate)
+		if err != nil {
+			return httpx.NewError(http.StatusBadRequest, "invalid eventDate, expected YYYY-MM-DD")
+		}
+
+		// La mise à jour doit exister : on renvoie 404 plutôt qu'un résultat vide.
+		existing, err := h.queries.FindEngagementUpdateByID(r.Context(), updateID)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return httpx.NewError(http.StatusNotFound, "engagement update not found")
+			}
+			return fmt.Errorf("UpdateEngagementUpdate failed: %w", err)
+		}
+
+		// Seul l'auteur de la mise à jour peut la modifier.
+		if existing.CreatedBy != authedUser.ID {
+			return httpx.NewError(http.StatusForbidden, "forbidden")
+		}
+
+		updated, err := h.queries.UpdateEngagementUpdate(r.Context(), dao.UpdateEngagementUpdateParams{
+			ID:             updateID,
+			Status:         string(in.Status),
+			Content:        in.Content,
+			EventDate:      eventDate,
+			DeliberationID: in.DeliberationID,
+			ExternalSource: in.ExternalSource,
+		})
+		if err != nil {
+			// Violation de clé étrangère : la délibération référencée n'existe pas.
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+				return httpx.NewError(http.StatusBadRequest, "invalid deliberation reference")
+			}
+			return fmt.Errorf("UpdateEngagementUpdate failed: %w", err)
+		}
+
+		out := EngagementUpdate{
+			ID:             updated.ID,
+			Status:         Status(updated.Status),
+			Content:        updated.Content,
+			EventDate:      updated.EventDate,
+			ExternalSource: updated.ExternalSource,
+			AuthorEmail:    authedUser.Email,
+			CreatedAt:      updated.CreatedAt,
+		}
+		if updated.DeliberationID != nil {
+			delibRows, err := h.queries.ListDeliberationsByIDs(r.Context(), []uuid.UUID{*updated.DeliberationID})
+			if err != nil {
+				return fmt.Errorf("UpdateEngagementUpdate failed: %w", err)
+			}
+			if len(delibRows) > 0 {
+				d := mapDeliberation(delibRows[0])
+				out.Deliberation = &d
+			}
+		}
+
+		return httpx.JSON(w, http.StatusOK, out)
+	})
+}
+
 // asDatePtr convertit la valeur brute d'un agrégat SQL nullable (MAX(event_date))
 // en *time.Time : pgx décode une DATE non nulle en time.Time, et NULL en nil.
 func asDatePtr(v interface{}) *time.Time {

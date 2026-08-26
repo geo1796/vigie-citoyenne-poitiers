@@ -28,6 +28,7 @@ import { Route as DeliberationsDeliberationIdRouteImport } from './routes/delibe
 import { Route as AdminInviterContributeurRouteImport } from './routes/admin/inviter-contributeur'
 import { Route as EspaceContributeurEngagementsNouveauRouteImport } from './routes/espace-contributeur/engagements/nouveau'
 import { Route as EspaceContributeurEngagementsEngagementIdUpdatesNouveauRouteImport } from './routes/espace-contributeur/engagements/$engagementId/updates/nouveau'
+import { Route as EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRouteImport } from './routes/espace-contributeur/engagements/$engagementId/updates/$updateId'
 
 const MentionsLegalesLazyRouteImport = createFileRoute('/mentions-legales')()
 
@@ -128,6 +129,12 @@ const EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute =
     path: '/espace-contributeur/engagements/$engagementId/updates/nouveau',
     getParentRoute: () => rootRouteImport,
   } as any)
+const EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute =
+  EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRouteImport.update({
+    id: '/espace-contributeur/engagements/$engagementId/updates/$updateId',
+    path: '/espace-contributeur/engagements/$engagementId/updates/$updateId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/indicateurs/': typeof IndicateursIndexRoute
   '/nominations/': typeof NominationsIndexRoute
   '/espace-contributeur/engagements/nouveau': typeof EspaceContributeurEngagementsNouveauRoute
+  '/espace-contributeur/engagements/$engagementId/updates/$updateId': typeof EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute
   '/espace-contributeur/engagements/$engagementId/updates/nouveau': typeof EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute
 }
 export interface FileRoutesByTo {
@@ -167,6 +175,7 @@ export interface FileRoutesByTo {
   '/indicateurs': typeof IndicateursIndexRoute
   '/nominations': typeof NominationsIndexRoute
   '/espace-contributeur/engagements/nouveau': typeof EspaceContributeurEngagementsNouveauRoute
+  '/espace-contributeur/engagements/$engagementId/updates/$updateId': typeof EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute
   '/espace-contributeur/engagements/$engagementId/updates/nouveau': typeof EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute
 }
 export interface FileRoutesById {
@@ -188,6 +197,7 @@ export interface FileRoutesById {
   '/indicateurs/': typeof IndicateursIndexRoute
   '/nominations/': typeof NominationsIndexRoute
   '/espace-contributeur/engagements/nouveau': typeof EspaceContributeurEngagementsNouveauRoute
+  '/espace-contributeur/engagements/$engagementId/updates/$updateId': typeof EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute
   '/espace-contributeur/engagements/$engagementId/updates/nouveau': typeof EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute
 }
 export interface FileRouteTypes {
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/indicateurs/'
     | '/nominations/'
     | '/espace-contributeur/engagements/nouveau'
+    | '/espace-contributeur/engagements/$engagementId/updates/$updateId'
     | '/espace-contributeur/engagements/$engagementId/updates/nouveau'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -230,6 +241,7 @@ export interface FileRouteTypes {
     | '/indicateurs'
     | '/nominations'
     | '/espace-contributeur/engagements/nouveau'
+    | '/espace-contributeur/engagements/$engagementId/updates/$updateId'
     | '/espace-contributeur/engagements/$engagementId/updates/nouveau'
   id:
     | '__root__'
@@ -250,6 +262,7 @@ export interface FileRouteTypes {
     | '/indicateurs/'
     | '/nominations/'
     | '/espace-contributeur/engagements/nouveau'
+    | '/espace-contributeur/engagements/$engagementId/updates/$updateId'
     | '/espace-contributeur/engagements/$engagementId/updates/nouveau'
   fileRoutesById: FileRoutesById
 }
@@ -271,6 +284,7 @@ export interface RootRouteChildren {
   IndicateursIndexRoute: typeof IndicateursIndexRoute
   NominationsIndexRoute: typeof NominationsIndexRoute
   EspaceContributeurEngagementsNouveauRoute: typeof EspaceContributeurEngagementsNouveauRoute
+  EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute: typeof EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute
   EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute: typeof EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute
 }
 
@@ -402,6 +416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EspaceContributeurEngagementsEngagementIdUpdatesNouveauRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/espace-contributeur/engagements/$engagementId/updates/$updateId': {
+      id: '/espace-contributeur/engagements/$engagementId/updates/$updateId'
+      path: '/espace-contributeur/engagements/$engagementId/updates/$updateId'
+      fullPath: '/espace-contributeur/engagements/$engagementId/updates/$updateId'
+      preLoaderRoute: typeof EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -424,6 +445,8 @@ const rootRouteChildren: RootRouteChildren = {
   NominationsIndexRoute: NominationsIndexRoute,
   EspaceContributeurEngagementsNouveauRoute:
     EspaceContributeurEngagementsNouveauRoute,
+  EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute:
+    EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute,
   EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute:
     EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute,
 }

@@ -17,5 +17,10 @@ export const Route = createFileRoute(
       throw redirect({ to: '/espace-contributeur' });
     }
   },
-  component: EngagementUpdateFormPage,
+  component: RouteComponent,
 });
+
+function RouteComponent() {
+  const { engagementId } = Route.useParams();
+  return <EngagementUpdateFormPage engagementId={engagementId} />;
+}

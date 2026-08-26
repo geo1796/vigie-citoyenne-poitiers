@@ -1,6 +1,13 @@
+import { useForm } from '@tanstack/react-form';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { CalendarIcon, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { fr } from 'react-day-picker/locale';
+import { toast } from 'sonner';
+import { z } from 'zod';
 import { deliberationsQueries } from '@/features/deliberations/api';
 import { type Deliberation, instanceLabels } from '@/features/deliberations/model';
-import { Route } from '@/routes/espace-contributeur/engagements/$engagementId/updates/nouveau';
 import { Button } from '@/shadcn/components/ui/button';
 import { Calendar } from '@/shadcn/components/ui/calendar';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/shadcn/components/ui/field';
@@ -14,17 +21,13 @@ import {
   SelectValue,
 } from '@/shadcn/components/ui/select';
 import { Textarea } from '@/shadcn/components/ui/textarea';
-import { useForm } from '@tanstack/react-form';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
-import { CalendarIcon, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { z } from 'zod';
-import { useCreateEngagementUpdate } from '../api';
-import { type EngagementStatus, engagementStatusLabels, engagementStatusSchema } from '../model';
-import { fr } from "react-day-picker/locale"
-import React from 'react';
+import { useCreateEngagementUpdate, useUpdateEngagementUpdate } from '../api';
+import {
+  type EngagementStatus,
+  type EngagementUpdate,
+  engagementStatusLabels,
+  engagementStatusSchema,
+} from '../model';
 
 const DEBOUNCE_MS = 300;
 const STATUS_OPTIONS = engagementStatusSchema.options;
@@ -114,32 +117,43 @@ function DeliberationPicker({
   );
 }
 
-export function EngagementUpdateFormPage() {
-  const { engagementId } = Route.useParams();
+export function EngagementUpdateFormPage({
+  engagementId,
+  update,
+}: {
+  engagementId: string;
+  update?: EngagementUpdate;
+}) {
+  const isEdit = update !== undefined;
   const navigate = useNavigate();
   const create = useCreateEngagementUpdate(engagementId);
+  const edit = useUpdateEngagementUpdate(engagementId, update?.id ?? '');
+  const pending = isEdit ? edit.isPending : create.isPending;
 
-  const [selectedDelib, setSelectedDelib] = useState<Deliberation | null>(null);
+  const [selectedDelib, setSelectedDelib] = useState<Deliberation | null>(
+    update?.deliberation ?? null,
+  );
 
   const selectStatutItems = STATUS_OPTIONS.map((status) => ({
     value: status,
     label: engagementStatusLabels[status],
   }));
 
-  const [openDatePicker, setOpenDatePicker] = React.useState(false)
+  const [openDatePicker, setOpenDatePicker] = React.useState(false);
 
   const form = useForm({
     defaultValues: {
-      status: 'en_cours' as EngagementStatus,
-      eventDate: new Date(),
-      content: '',
-      externalSource: '',
+      status: update?.status ?? ('en_cours' as EngagementStatus),
+      eventDate: update?.eventDate ?? new Date(),
+      content: update?.content ?? '',
+      externalSource: update?.externalSource ?? '',
     },
     validators: {
       onSubmit: updateFormSchema,
     },
     onSubmit: async ({ value }) => {
-      create.mutate(
+      const mutation = isEdit ? edit : create;
+      mutation.mutate(
         {
           status: value.status,
           eventDate: formatDateOnly(value.eventDate),
@@ -149,7 +163,7 @@ export function EngagementUpdateFormPage() {
         },
         {
           onSuccess: () => {
-            toast.success('Mise à jour enregistrée.');
+            toast.success(isEdit ? 'Mise à jour modifiée.' : 'Mise à jour enregistrée.');
             navigate({
               to: '/engagements/$engagementId',
               params: { engagementId },
@@ -166,7 +180,9 @@ export function EngagementUpdateFormPage() {
         <p className="text-xs uppercase tracking-wider text-muted-foreground">
           Espace contributeur
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">Nouvelle mise à jour</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {isEdit ? 'Modifier la mise à jour' : 'Nouvelle mise à jour'}
+        </h1>
         <p className="text-sm text-muted-foreground">
           Documentez l'avancement de l'engagement : un statut, une note, et éventuellement une
           délibération ou un lien externe.
@@ -212,26 +228,29 @@ export function EngagementUpdateFormPage() {
                 <Field data-invalid={isInvalid}>
                   <FieldLabel htmlFor={field.name}>Date de l'événement</FieldLabel>
                   <Popover open={openDatePicker} onOpenChange={setOpenDatePicker}>
-                    <PopoverTrigger render={
-                      <Button
-                        id={field.name}
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal"
-                        aria-invalid={isInvalid}
-                        onBlur={field.handleBlur}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
+                    <PopoverTrigger
+                      render={
+                        <Button
+                          id={field.name}
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                          aria-invalid={isInvalid}
+                          onBlur={field.handleBlur}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
 
-                        {field.state.value ? (
-                          field.state.value.toLocaleDateString('fr-FR', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                          })
-                        ) : (
-                          <span>Sélectionner une date</span>
-                        )}
-                      </Button>} />
+                          {field.state.value ? (
+                            field.state.value.toLocaleDateString('fr-FR', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                            })
+                          ) : (
+                            <span>Sélectionner une date</span>
+                          )}
+                        </Button>
+                      }
+                    />
 
                     <PopoverContent className="w-auto p-0">
                       <Calendar
@@ -307,8 +326,12 @@ export function EngagementUpdateFormPage() {
           </form.Field>
         </FieldGroup>
 
-        <Button type="submit" className="mt-6 w-full" disabled={create.isPending}>
-          {create.isPending ? 'Enregistrement…' : 'Enregistrer la mise à jour'}
+        <Button type="submit" className="mt-6 w-full" disabled={pending}>
+          {pending
+            ? 'Enregistrement…'
+            : isEdit
+              ? 'Enregistrer les modifications'
+              : 'Enregistrer la mise à jour'}
         </Button>
       </form>
     </div>

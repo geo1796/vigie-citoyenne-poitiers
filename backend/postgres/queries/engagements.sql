@@ -71,6 +71,23 @@ INSERT INTO app.engagement_updates (
 RETURNING id, engagement_id, status, content, event_date, deliberation_id, external_source,
     created_by, created_at, updated_at;
 
+-- name: FindEngagementUpdateByID :one
+SELECT id, engagement_id, status, content, event_date, deliberation_id,
+    external_source, created_by, created_at, updated_at
+FROM app.engagement_updates
+WHERE id = $1;
+
+-- name: UpdateEngagementUpdate :one
+UPDATE app.engagement_updates
+SET status = @status,
+    content = @content,
+    event_date = @event_date,
+    deliberation_id = @deliberation_id,
+    external_source = @external_source
+WHERE id = @id
+RETURNING id, engagement_id, status, content, event_date, deliberation_id, external_source,
+    created_by, created_at, updated_at;
+
 -- name: ListEngagementUpdates :many
 SELECT
     eu.id, eu.status, eu.content, eu.event_date, eu.external_source, eu.deliberation_id,
