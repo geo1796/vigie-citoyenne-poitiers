@@ -1,19 +1,12 @@
-import { Card, CardHeader } from '@/shadcn/components/ui/card';
 import { Link } from '@tanstack/react-router';
+import { Card, CardContent, CardHeader } from '@/shadcn/components/ui/card';
 import type { Engagement } from '../model';
+import { formatLongDate } from '../utils';
 import { EngagementStatusBadge } from './EngagementStatusBadge';
 
 type Props = {
   engagement: Engagement;
 };
-
-// function formatDate(d: Date): string {
-//   return d.toLocaleDateString('fr-FR', {
-//     day: 'numeric',
-//     month: 'long',
-//     year: 'numeric',
-//   });
-// }
 
 export function EngagementCard({ engagement: e }: Props) {
   return (
@@ -30,9 +23,13 @@ export function EngagementCard({ engagement: e }: Props) {
           <h3 className="text-lg font-semibold leading-snug tracking-tight">{e.title}</h3>
         </CardHeader>
 
-        {/* <CardContent>
-          <div className="text-xs text-muted-foreground">Ajouté le {formatDate(e.createdAt)}</div>
-        </CardContent> */}
+        {e.eventDate && (
+          <CardContent>
+            <div className="text-xs text-muted-foreground">
+              Dernière mise à jour · {formatLongDate(e.eventDate)}
+            </div>
+          </CardContent>
+        )}
       </Card>
     </Link>
   );

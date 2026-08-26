@@ -46,6 +46,7 @@ INSERT INTO app.engagement_updates (
     engagement_id,
     status,
     content,
+    event_date,
     deliberation_id,
     external_source,
     created_by
@@ -55,9 +56,10 @@ INSERT INTO app.engagement_updates (
     $3,
     $4,
     $5,
-    $6
+    $6,
+    $7
 )
-RETURNING id, engagement_id, status, content, deliberation_id, external_source,
+RETURNING id, engagement_id, status, content, event_date, deliberation_id, external_source,
     created_by, created_at, updated_at
 `
 
@@ -65,6 +67,7 @@ type CreateEngagementUpdateParams struct {
 	EngagementID   uuid.UUID
 	Status         string
 	Content        string
+	EventDate      time.Time
 	DeliberationID *uuid.UUID
 	ExternalSource *string
 	CreatedBy      uuid.UUID
@@ -75,6 +78,7 @@ func (q *Queries) CreateEngagementUpdate(ctx context.Context, arg CreateEngageme
 		arg.EngagementID,
 		arg.Status,
 		arg.Content,
+		arg.EventDate,
 		arg.DeliberationID,
 		arg.ExternalSource,
 		arg.CreatedBy,
@@ -85,6 +89,7 @@ func (q *Queries) CreateEngagementUpdate(ctx context.Context, arg CreateEngageme
 		&i.EngagementID,
 		&i.Status,
 		&i.Content,
+		&i.EventDate,
 		&i.DeliberationID,
 		&i.ExternalSource,
 		&i.CreatedBy,
@@ -99,7 +104,10 @@ SELECT
     e.id, e.title,
     e.created_by, u.email AS author_email,
     e.created_at, e.updated_at,
-    COALESCE(latest.status, 'en_attente') AS status
+    COALESCE(latest.status, 'en_attente') AS status,
+    (SELECT MAX(eu.event_date)
+        FROM app.engagement_updates eu
+        WHERE eu.engagement_id = e.id) AS latest_event_date
 FROM app.engagements e
 JOIN app.users u ON u.id = e.created_by
 LEFT JOIN LATERAL (
@@ -113,13 +121,14 @@ WHERE e.id = $1
 `
 
 type FindEngagementByIDRow struct {
-	ID          uuid.UUID
-	Title       string
-	CreatedBy   uuid.UUID
-	AuthorEmail string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Status      string
+	ID              uuid.UUID
+	Title           string
+	CreatedBy       uuid.UUID
+	AuthorEmail     string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Status          string
+	LatestEventDate interface{}
 }
 
 func (q *Queries) FindEngagementByID(ctx context.Context, id uuid.UUID) (FindEngagementByIDRow, error) {
@@ -133,13 +142,14 @@ func (q *Queries) FindEngagementByID(ctx context.Context, id uuid.UUID) (FindEng
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Status,
+		&i.LatestEventDate,
 	)
 	return i, err
 }
 
 const listEngagementUpdates = `-- name: ListEngagementUpdates :many
 SELECT
-    eu.id, eu.status, eu.content, eu.external_source, eu.deliberation_id,
+    eu.id, eu.status, eu.content, eu.event_date, eu.external_source, eu.deliberation_id,
     eu.created_by, u.email AS author_email, eu.created_at
 FROM app.engagement_updates eu
 JOIN app.users u ON u.id = eu.created_by
@@ -151,6 +161,7 @@ type ListEngagementUpdatesRow struct {
 	ID             uuid.UUID
 	Status         string
 	Content        string
+	EventDate      time.Time
 	ExternalSource *string
 	DeliberationID *uuid.UUID
 	CreatedBy      uuid.UUID
@@ -171,6 +182,7 @@ func (q *Queries) ListEngagementUpdates(ctx context.Context, engagementID uuid.U
 			&i.ID,
 			&i.Status,
 			&i.Content,
+			&i.EventDate,
 			&i.ExternalSource,
 			&i.DeliberationID,
 			&i.CreatedBy,
@@ -192,7 +204,10 @@ SELECT
     e.id, e.title,
     e.created_by, u.email AS author_email,
     e.created_at, e.updated_at,
-    COALESCE(latest.status, 'en_attente') AS status
+    COALESCE(latest.status, 'en_attente') AS status,
+    (SELECT MAX(eu.event_date)
+        FROM app.engagement_updates eu
+        WHERE eu.engagement_id = e.id) AS latest_event_date
 FROM app.engagements e
 JOIN app.users u ON u.id = e.created_by
 LEFT JOIN LATERAL (
@@ -213,13 +228,14 @@ type ListEngagementsParams struct {
 }
 
 type ListEngagementsRow struct {
-	ID          uuid.UUID
-	Title       string
-	CreatedBy   uuid.UUID
-	AuthorEmail string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Status      string
+	ID              uuid.UUID
+	Title           string
+	CreatedBy       uuid.UUID
+	AuthorEmail     string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Status          string
+	LatestEventDate interface{}
 }
 
 func (q *Queries) ListEngagements(ctx context.Context, arg ListEngagementsParams) ([]ListEngagementsRow, error) {
@@ -239,6 +255,7 @@ func (q *Queries) ListEngagements(ctx context.Context, arg ListEngagementsParams
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Status,
+			&i.LatestEventDate,
 		); err != nil {
 			return nil, err
 		}

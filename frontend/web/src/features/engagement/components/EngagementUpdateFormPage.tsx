@@ -27,9 +27,17 @@ const STATUS_OPTIONS = engagementStatusSchema.options;
 
 const updateFormSchema = z.object({
   status: engagementStatusSchema,
+  eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date de l'événement requise."),
   content: z.string().trim().min(1, 'La note est requise.'),
   externalSource: z.union([z.literal(''), z.string().trim().url('Lien invalide (URL attendue).')]),
 });
+
+// Date du jour au format « YYYY-MM-DD » (fuseau local), pour pré-remplir le champ.
+function todayIsoDate(): string {
+  const now = new Date();
+  const offsetMs = now.getTimezoneOffset() * 60_000;
+  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
+}
 
 function DeliberationPicker({
   selected,
@@ -119,6 +127,7 @@ export function EngagementUpdateFormPage() {
   const form = useForm({
     defaultValues: {
       status: 'en_cours' as EngagementStatus,
+      eventDate: todayIsoDate(),
       content: '',
       externalSource: '',
     },
@@ -129,6 +138,7 @@ export function EngagementUpdateFormPage() {
       create.mutate(
         {
           status: value.status,
+          eventDate: value.eventDate,
           content: value.content,
           deliberationId: selectedDelib?.id ?? null,
           externalSource: value.externalSource ? value.externalSource : null,
@@ -188,6 +198,27 @@ export function EngagementUpdateFormPage() {
                 </Select>
               </Field>
             )}
+          </form.Field>
+
+          <form.Field name="eventDate">
+            {(field) => {
+              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+              return (
+                <Field data-invalid={isInvalid}>
+                  <FieldLabel htmlFor={field.name}>Date de l'événement</FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="date"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                  />
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                </Field>
+              );
+            }}
           </form.Field>
 
           <form.Field name="content">

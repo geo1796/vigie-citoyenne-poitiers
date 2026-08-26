@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/geo1796/vigie-citoyenne-poitiers/features/auth"
 	"github.com/geo1796/vigie-citoyenne-poitiers/features/common/httpx"
@@ -82,6 +83,7 @@ func (h *listEngagementsHandler) ListEngagements() http.HandlerFunc {
 				Title:       row.Title,
 				Status:      Status(row.Status),
 				AuthorEmail: row.AuthorEmail,
+				EventDate:   asDatePtr(row.LatestEventDate),
 				CreatedAt:   row.CreatedAt,
 				UpdatedAt:   row.UpdatedAt,
 			}
@@ -160,6 +162,7 @@ func (h *findEngagementHandler) FindEngagement() http.HandlerFunc {
 				ID:             u.ID,
 				Status:         Status(u.Status),
 				Content:        u.Content,
+				EventDate:      u.EventDate,
 				ExternalSource: u.ExternalSource,
 				AuthorEmail:    u.AuthorEmail,
 				CreatedAt:      u.CreatedAt,
@@ -178,6 +181,7 @@ func (h *findEngagementHandler) FindEngagement() http.HandlerFunc {
 				Title:       row.Title,
 				Status:      Status(row.Status),
 				AuthorEmail: row.AuthorEmail,
+				EventDate:   asDatePtr(row.LatestEventDate),
 				CreatedAt:   row.CreatedAt,
 				UpdatedAt:   row.UpdatedAt,
 			},
@@ -269,6 +273,11 @@ func (h *createEngagementUpdateHandler) CreateEngagementUpdate() http.HandlerFun
 			return httpx.NewError(http.StatusBadRequest, err.Error())
 		}
 
+		eventDate, err := time.Parse("2006-01-02", in.EventDate)
+		if err != nil {
+			return httpx.NewError(http.StatusBadRequest, "invalid eventDate, expected YYYY-MM-DD")
+		}
+
 		// L'engagement doit exister : on renvoie 404 plutôt qu'une violation de
 		// clé étrangère opaque.
 		if _, err := h.queries.FindEngagementByID(r.Context(), engagementID); err != nil {
@@ -282,6 +291,7 @@ func (h *createEngagementUpdateHandler) CreateEngagementUpdate() http.HandlerFun
 			EngagementID:   engagementID,
 			Status:         string(in.Status),
 			Content:        in.Content,
+			EventDate:      eventDate,
 			DeliberationID: in.DeliberationID,
 			ExternalSource: in.ExternalSource,
 			CreatedBy:      authedUser.ID,
@@ -299,6 +309,7 @@ func (h *createEngagementUpdateHandler) CreateEngagementUpdate() http.HandlerFun
 			ID:             created.ID,
 			Status:         Status(created.Status),
 			Content:        created.Content,
+			EventDate:      created.EventDate,
 			ExternalSource: created.ExternalSource,
 			AuthorEmail:    authedUser.Email,
 			CreatedAt:      created.CreatedAt,
@@ -316,6 +327,15 @@ func (h *createEngagementUpdateHandler) CreateEngagementUpdate() http.HandlerFun
 
 		return httpx.JSON(w, http.StatusCreated, out)
 	})
+}
+
+// asDatePtr convertit la valeur brute d'un agrégat SQL nullable (MAX(event_date))
+// en *time.Time : pgx décode une DATE non nulle en time.Time, et NULL en nil.
+func asDatePtr(v interface{}) *time.Time {
+	if t, ok := v.(time.Time); ok {
+		return &t
+	}
+	return nil
 }
 
 // mapDeliberation convertit une ligne DAO en DTO public de délibération.

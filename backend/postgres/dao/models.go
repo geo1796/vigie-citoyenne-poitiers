@@ -47,6 +47,7 @@ type AppEngagementUpdate struct {
 	EngagementID   uuid.UUID
 	Status         string
 	Content        string
+	EventDate      time.Time
 	DeliberationID *uuid.UUID
 	ExternalSource *string
 	CreatedBy      uuid.UUID

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
 // Keys
@@ -7,16 +7,16 @@ import { z } from "zod";
 // synchronisé manuellement — la liste est courte et change rarement.
 
 export const indicateurKeySchema = z.enum([
-	"budget_ccas",
-	"budget_communaute_urbaine",
-	"budget_ville_poitiers",
+  'budget_ccas',
+  'budget_communaute_urbaine',
+  'budget_ville_poitiers',
 ]);
 export type IndicateurKey = z.infer<typeof indicateurKeySchema>;
 
 export const indicateurKeyLabels: Record<IndicateurKey, string> = {
-	budget_ccas: "Budget CCAS",
-	budget_communaute_urbaine: "Budget Communauté urbaine",
-	budget_ville_poitiers: "Budget Ville de Poitiers",
+  budget_ccas: 'Budget CCAS',
+  budget_communaute_urbaine: 'Budget Communauté urbaine',
+  budget_ville_poitiers: 'Budget Ville de Poitiers',
 };
 
 // ---------------------------------------------------------------------------
@@ -24,11 +24,11 @@ export const indicateurKeyLabels: Record<IndicateurKey, string> = {
 // ---------------------------------------------------------------------------
 
 export const indicateurSchema = z.object({
-	key: indicateurKeySchema,
-	firstReference: z.string(),
-	lastReference: z.string(),
-	lastUpdate: z.coerce.date(),
-	observationsCount: z.number().int().nonnegative(),
+  key: indicateurKeySchema,
+  firstReference: z.string(),
+  lastReference: z.string(),
+  lastUpdate: z.coerce.date(),
+  observationsCount: z.number().int().nonnegative(),
 });
 
 export type Indicateur = z.infer<typeof indicateurSchema>;
@@ -44,16 +44,15 @@ export type ListIndicateursResult = z.infer<typeof listIndicateursResultSchema>;
 // il sait quoi en faire. La feature core reste agnostique du métier.
 
 export const observationSchema = z.object({
-	id: z.uuid(),
-	key: indicateurKeySchema,
-	reference: z.string(),
-	data: z.unknown(),
-	createdAt: z.coerce.date(),
-	updatedAt: z.coerce.date(),
+  id: z.uuid(),
+  key: indicateurKeySchema,
+  reference: z.string(),
+  data: z.unknown(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export type Observation = z.infer<typeof observationSchema>;
 
 export const listObservationsResultSchema = z.array(observationSchema);
 export type ListObservationsResult = z.infer<typeof listObservationsResultSchema>;
-

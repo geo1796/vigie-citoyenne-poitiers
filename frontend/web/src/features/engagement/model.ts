@@ -17,6 +17,8 @@ export const engagementSchema = z.object({
   title: z.string(),
   status: engagementStatusSchema,
   authorEmail: z.string(),
+  // Date la plus récente parmi les mises à jour (null tant qu'il n'y en a aucune).
+  eventDate: z.coerce.date().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -27,6 +29,7 @@ export const engagementUpdateSchema = z.object({
   id: z.uuid(),
   status: engagementStatusSchema,
   content: z.string(),
+  eventDate: z.coerce.date(),
   externalSource: z.string().nullable(),
   deliberation: deliberationSchema.nullable(),
   authorEmail: z.string(),
@@ -65,6 +68,8 @@ export type CreateEngagementInput = z.infer<typeof createEngagementInputSchema>;
 
 export const createEngagementUpdateInputSchema = z.object({
   status: engagementStatusSchema,
+  // Format ISO « YYYY-MM-DD » attendu par le backend.
+  eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date requise.'),
   content: z.string().trim().min(1, 'La note est requise.'),
   deliberationId: z.uuid().nullish(),
   externalSource: z.string().trim().url('Lien invalide.').nullish(),

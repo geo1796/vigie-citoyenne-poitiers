@@ -29,6 +29,10 @@ type Engagement struct {
 
 	AuthorEmail string `json:"authorEmail"`
 
+	// EventDate est la date la plus récente parmi les `event_date` des mises à jour
+	// de l'engagement (nil tant qu'aucune mise à jour n'a été enregistrée).
+	EventDate *time.Time `json:"eventDate"`
+
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -41,6 +45,9 @@ type EngagementUpdate struct {
 
 	Status  Status `json:"status"`
 	Content string `json:"content"`
+
+	// EventDate est la date de l'événement documenté, saisie par le contributeur.
+	EventDate time.Time `json:"eventDate"`
 
 	ExternalSource *string                    `json:"externalSource"`
 	Deliberation   *deliberation.Deliberation `json:"deliberation"`
@@ -61,7 +68,9 @@ type CreateEngagementInput struct {
 // La note (`content`) est obligatoire ; la délibération et la source externe sont
 // toutes deux optionnelles.
 type CreateEngagementUpdateInput struct {
-	Status         Status     `json:"status" validate:"required,oneof=en_attente en_cours tenu rompu"`
+	Status Status `json:"status" validate:"required,oneof=en_attente en_cours tenu rompu"`
+	// EventDate est attendue au format ISO « YYYY-MM-DD ».
+	EventDate      string     `json:"eventDate" validate:"required"`
 	Content        string     `json:"content" validate:"required"`
 	DeliberationID *uuid.UUID `json:"deliberationId"`
 	ExternalSource *string    `json:"externalSource" validate:"omitempty,url"`

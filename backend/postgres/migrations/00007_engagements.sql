@@ -37,6 +37,10 @@ CREATE TABLE app.engagement_updates (
 
     content         TEXT NOT NULL,
 
+    -- Date de l'événement documenté par la mise à jour (saisie par le contributeur),
+    -- distincte de created_at qui n'est que l'horodatage d'insertion en base.
+    event_date      DATE NOT NULL,
+
     deliberation_id UUID,
     CONSTRAINT fk_engagement_updates_deliberation FOREIGN KEY (deliberation_id)
         REFERENCES app.deliberations (id) ON DELETE SET NULL,
