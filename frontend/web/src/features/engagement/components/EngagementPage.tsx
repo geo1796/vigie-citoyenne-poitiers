@@ -78,11 +78,7 @@ export function EngagementPage() {
   const { engagement, updates } = data;
 
   const handleBack = () => {
-    if (router.history.canGoBack()) {
-      router.history.back();
-    } else {
-      router.navigate({ to: '/engagements', search: { limit: 25, offset: 0 } });
-    }
+    router.navigate({ to: '/engagements', search: { limit: 25, offset: 0 } });
   };
 
   return (
