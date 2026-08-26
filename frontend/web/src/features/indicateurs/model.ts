@@ -15,8 +15,8 @@ export type IndicateurKey = z.infer<typeof indicateurKeySchema>;
 
 export const indicateurKeyLabels: Record<IndicateurKey, string> = {
   budget_ccas: 'Budget CCAS',
-  budget_communaute_urbaine: 'Budget Communauté urbaine',
-  budget_ville_poitiers: 'Budget Ville de Poitiers',
+  budget_communaute_urbaine: 'Budget communauté urbaine',
+  budget_ville_poitiers: 'Budget ville de Poitiers',
 };
 
 // ---------------------------------------------------------------------------
