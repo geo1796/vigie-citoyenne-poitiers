@@ -1,13 +1,20 @@
 import { z } from 'zod';
 import { deliberationSchema } from '@/features/deliberations/model';
 
-export const engagementStatusSchema = z.enum(['en_attente', 'en_cours', 'tenu', 'rompu']);
+export const engagementStatusSchema = z.enum([
+  'en_attente',
+  'en_cours',
+  'en_tension',
+  'tenu',
+  'rompu',
+]);
 
 export type EngagementStatus = z.infer<typeof engagementStatusSchema>;
 
 export const engagementStatusLabels: Record<EngagementStatus, string> = {
   en_attente: 'En attente',
   en_cours: 'En cours',
+  en_tension: 'En tension',
   tenu: 'Tenu',
   rompu: 'Rompu',
 };

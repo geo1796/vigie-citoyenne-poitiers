@@ -190,7 +190,7 @@ CREATE TABLE app.engagement_updates (
 
     status          TEXT NOT NULL,
     CONSTRAINT ck_engagement_updates_status
-        CHECK (status IN ('en_attente', 'en_cours', 'tenu', 'rompu')),
+        CHECK (status IN ('en_attente', 'en_cours', 'en_tension', 'tenu', 'rompu')),
 
     content         TEXT NOT NULL,
 

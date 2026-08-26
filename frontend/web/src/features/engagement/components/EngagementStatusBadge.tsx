@@ -5,6 +5,7 @@ import { type EngagementStatus, engagementStatusLabels } from '../model';
 const statusStyles: Record<EngagementStatus, string> = {
   en_attente: 'bg-muted text-muted-foreground',
   en_cours: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  en_tension: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   tenu: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   rompu: 'bg-destructive/10 text-destructive',
 };

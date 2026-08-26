@@ -15,6 +15,7 @@ type Status string
 const (
 	StatusEnAttente Status = "en_attente"
 	StatusEnCours   Status = "en_cours"
+	StatusEnTension Status = "en_tension"
 	StatusTenu      Status = "tenu"
 	StatusRompu     Status = "rompu"
 )
@@ -68,7 +69,7 @@ type CreateEngagementInput struct {
 // La note (`content`) est obligatoire ; la délibération et la source externe sont
 // toutes deux optionnelles.
 type CreateEngagementUpdateInput struct {
-	Status Status `json:"status" validate:"required,oneof=en_attente en_cours tenu rompu"`
+	Status Status `json:"status" validate:"required,oneof=en_attente en_cours en_tension tenu rompu"`
 	// EventDate est attendue au format ISO « YYYY-MM-DD ».
 	EventDate      string     `json:"eventDate" validate:"required"`
 	Content        string     `json:"content" validate:"required"`
@@ -80,7 +81,7 @@ type CreateEngagementUpdateInput struct {
 // Les cinq champs sont remplacés à chaque appel (sémantique PUT) ; les mêmes règles de
 // validation que la création s'appliquent.
 type UpdateEngagementUpdateInput struct {
-	Status Status `json:"status" validate:"required,oneof=en_attente en_cours tenu rompu"`
+	Status Status `json:"status" validate:"required,oneof=en_attente en_cours en_tension tenu rompu"`
 	// EventDate est attendue au format ISO « YYYY-MM-DD ».
 	EventDate      string     `json:"eventDate" validate:"required"`
 	Content        string     `json:"content" validate:"required"`
