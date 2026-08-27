@@ -82,6 +82,7 @@ func (h *listEngagementsHandler) ListEngagements() http.HandlerFunc {
 				ID:          row.ID,
 				Title:       row.Title,
 				Status:      Status(row.Status),
+				Reference:   row.Reference,
 				AuthorEmail: row.AuthorEmail,
 				EventDate:   asDatePtr(row.LatestEventDate),
 				CreatedAt:   row.CreatedAt,
@@ -180,6 +181,7 @@ func (h *findEngagementHandler) FindEngagement() http.HandlerFunc {
 				ID:          row.ID,
 				Title:       row.Title,
 				Status:      Status(row.Status),
+				Reference:   row.Reference,
 				AuthorEmail: row.AuthorEmail,
 				EventDate:   asDatePtr(row.LatestEventDate),
 				CreatedAt:   row.CreatedAt,
@@ -221,6 +223,7 @@ func (h *createEngagementHandler) CreateEngagement() http.HandlerFunc {
 
 		created, err := h.queries.CreateEngagement(r.Context(), dao.CreateEngagementParams{
 			Title:     in.Title,
+			Reference: in.Reference,
 			CreatedBy: authedUser.ID,
 		})
 		if err != nil {
@@ -232,6 +235,7 @@ func (h *createEngagementHandler) CreateEngagement() http.HandlerFunc {
 			ID:          created.ID,
 			Title:       created.Title,
 			Status:      StatusEnAttente,
+			Reference:   created.Reference,
 			AuthorEmail: authedUser.Email,
 			CreatedAt:   created.CreatedAt,
 			UpdatedAt:   created.UpdatedAt,

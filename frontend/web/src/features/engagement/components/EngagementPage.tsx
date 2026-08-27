@@ -105,6 +105,11 @@ export function EngagementPage() {
         {engagement.title}
       </h1>
 
+      <p className="mt-4 text-sm text-muted-foreground">
+        <span className="font-medium text-foreground">Source · </span>
+        {engagement.reference}
+      </p>
+
       <section className="mt-12 space-y-6">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-xs uppercase tracking-wider text-muted-foreground">Suivi</h2>

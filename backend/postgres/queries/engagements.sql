@@ -1,16 +1,18 @@
 -- name: CreateEngagement :one
 INSERT INTO app.engagements (
     title,
+    reference,
     created_by
 ) VALUES (
     @title,
+    @reference,
     @created_by
 )
-RETURNING id, title, created_by, created_at, updated_at;
+RETURNING id, title, reference, created_by, created_at, updated_at;
 
 -- name: ListEngagements :many
 SELECT
-    e.id, e.title,
+    e.id, e.title, e.reference,
     e.created_by, u.email AS author_email,
     e.created_at, e.updated_at,
     COALESCE(latest.status, 'en_attente') AS status,
@@ -32,7 +34,7 @@ OFFSET sqlc.arg('offset');
 
 -- name: FindEngagementByID :one
 SELECT
-    e.id, e.title,
+    e.id, e.title, e.reference,
     e.created_by, u.email AS author_email,
     e.created_at, e.updated_at,
     COALESCE(latest.status, 'en_attente') AS status,

@@ -5,6 +5,9 @@ CREATE TABLE app.engagements (
 
     title       TEXT NOT NULL,
 
+    -- Provenance de l'engagement en texte libre (programme, discours, article de presse…).
+    reference   TEXT NOT NULL,
+
     created_by  UUID NOT NULL,
     CONSTRAINT  fk_engagements_user FOREIGN KEY (created_by)
         REFERENCES app.users (id) ON DELETE CASCADE,

@@ -12,13 +12,13 @@ export function EngagementFormPage() {
   const create = useCreateEngagement();
 
   const form = useForm({
-    defaultValues: { title: '' },
+    defaultValues: { title: '', reference: '' },
     validators: {
       onSubmit: createEngagementInputSchema,
     },
     onSubmit: async ({ value }) => {
       create.mutate(
-        { title: value.title },
+        { title: value.title, reference: value.reference },
         {
           onSuccess: (engagement) => {
             toast.success('Engagement enregistré.');
@@ -66,6 +66,27 @@ export function EngagementFormPage() {
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
                     aria-invalid={isInvalid}
+                  />
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                </Field>
+              );
+            }}
+          </form.Field>
+
+          <form.Field name="reference">
+            {(field) => {
+              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+              return (
+                <Field data-invalid={isInvalid}>
+                  <FieldLabel htmlFor={field.name}>Source de l'engagement</FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                    placeholder="Programme électoral, discours, article de presse…"
                   />
                   {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
