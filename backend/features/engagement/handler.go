@@ -82,6 +82,7 @@ func (h *listEngagementsHandler) ListEngagements() http.HandlerFunc {
 				ID:          row.ID,
 				Title:       row.Title,
 				Status:      Status(row.Status),
+				Reference:   row.Reference,
 				AuthorEmail: row.AuthorEmail,
 				EventDate:   asDatePtr(row.LatestEventDate),
 				CreatedAt:   row.CreatedAt,
@@ -180,6 +181,7 @@ func (h *findEngagementHandler) FindEngagement() http.HandlerFunc {
 				ID:          row.ID,
 				Title:       row.Title,
 				Status:      Status(row.Status),
+				Reference:   row.Reference,
 				AuthorEmail: row.AuthorEmail,
 				EventDate:   asDatePtr(row.LatestEventDate),
 				CreatedAt:   row.CreatedAt,
@@ -221,6 +223,7 @@ func (h *createEngagementHandler) CreateEngagement() http.HandlerFunc {
 
 		created, err := h.queries.CreateEngagement(r.Context(), dao.CreateEngagementParams{
 			Title:     in.Title,
+			Reference: in.Reference,
 			CreatedBy: authedUser.ID,
 		})
 		if err != nil {
@@ -232,9 +235,82 @@ func (h *createEngagementHandler) CreateEngagement() http.HandlerFunc {
 			ID:          created.ID,
 			Title:       created.Title,
 			Status:      StatusEnAttente,
+			Reference:   created.Reference,
 			AuthorEmail: authedUser.Email,
 			CreatedAt:   created.CreatedAt,
 			UpdatedAt:   created.UpdatedAt,
+		})
+	})
+}
+
+// ---------- UpdateEngagement ----------
+
+type UpdateEngagementHandler interface {
+	UpdateEngagement() http.HandlerFunc
+}
+
+type updateEngagementHandler struct {
+	queries *dao.Queries
+}
+
+func NewUpdateEngagementHandler(queries *dao.Queries) UpdateEngagementHandler {
+	return &updateEngagementHandler{queries}
+}
+
+func (h *updateEngagementHandler) UpdateEngagement() http.HandlerFunc {
+	return httpx.Adapt(func(w http.ResponseWriter, r *http.Request) error {
+		authedUser, ok := r.Context().Value("authedUser").(auth.AuthedUser)
+		if !ok {
+			return httpx.NewError(http.StatusInternalServerError, "authedUser not present in context")
+		}
+
+		id, err := uuid.Parse(chi.URLParam(r, "id"))
+		if err != nil {
+			return httpx.NewError(http.StatusBadRequest, err.Error())
+		}
+
+		var in UpdateEngagementInput
+		if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+			return httpx.NewError(http.StatusBadRequest, err.Error())
+		}
+		if err := validatorx.Validate(in); err != nil {
+			return httpx.NewError(http.StatusBadRequest, err.Error())
+		}
+
+		// L'engagement doit exister : on renvoie 404 plutôt qu'un résultat vide.
+		existing, err := h.queries.FindEngagementByID(r.Context(), id)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return httpx.NewError(http.StatusNotFound, "engagement not found")
+			}
+			return fmt.Errorf("UpdateEngagement failed: %w", err)
+		}
+
+		// Seul l'auteur de l'engagement peut le modifier.
+		if existing.CreatedBy != authedUser.ID {
+			return httpx.NewError(http.StatusForbidden, "forbidden")
+		}
+
+		updated, err := h.queries.UpdateEngagement(r.Context(), dao.UpdateEngagementParams{
+			Title:     in.Title,
+			Reference: in.Reference,
+			ID:        id,
+		})
+		if err != nil {
+			return fmt.Errorf("UpdateEngagement failed: %w", err)
+		}
+
+		// Le statut et la date d'événement sont dérivés des mises à jour : l'édition du
+		// titre/référence ne les change pas, on les reprend de `existing`.
+		return httpx.JSON(w, http.StatusOK, Engagement{
+			ID:          updated.ID,
+			Title:       updated.Title,
+			Status:      Status(existing.Status),
+			Reference:   updated.Reference,
+			AuthorEmail: existing.AuthorEmail,
+			EventDate:   asDatePtr(existing.LatestEventDate),
+			CreatedAt:   updated.CreatedAt,
+			UpdatedAt:   updated.UpdatedAt,
 		})
 	})
 }

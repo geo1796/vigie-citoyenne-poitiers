@@ -37,6 +37,7 @@ type AppDeliberation struct {
 type AppEngagement struct {
 	ID        uuid.UUID
 	Title     string
+	Reference string
 	CreatedBy uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time

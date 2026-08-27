@@ -23,6 +23,8 @@ export const engagementSchema = z.object({
   id: z.uuid(),
   title: z.string(),
   status: engagementStatusSchema,
+  // Provenance de l'engagement en texte libre.
+  reference: z.string(),
   authorEmail: z.string(),
   // Date la plus récente parmi les mises à jour (null tant qu'il n'y en a aucune).
   eventDate: z.coerce.date().nullable(),
@@ -69,6 +71,7 @@ export type FindEngagementResult = z.infer<typeof findEngagementResultSchema>;
 
 export const createEngagementInputSchema = z.object({
   title: z.string().trim().min(1, 'Le titre est requis.'),
+  reference: z.string().trim().min(1, 'La référence est requise.'),
 });
 
 export type CreateEngagementInput = z.infer<typeof createEngagementInputSchema>;

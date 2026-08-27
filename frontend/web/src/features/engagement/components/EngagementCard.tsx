@@ -21,6 +21,7 @@ export function EngagementCard({ engagement: e }: Props) {
             <EngagementStatusBadge status={e.status} />
           </div>
           <h3 className="text-lg font-semibold leading-snug tracking-tight">{e.title}</h3>
+          <p className="text-xs text-muted-foreground">Source · {e.reference}</p>
         </CardHeader>
 
         {e.eventDate && (

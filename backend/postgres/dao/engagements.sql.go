@@ -15,25 +15,29 @@ import (
 const createEngagement = `-- name: CreateEngagement :one
 INSERT INTO app.engagements (
     title,
+    reference,
     created_by
 ) VALUES (
     $1,
-    $2
+    $2,
+    $3
 )
-RETURNING id, title, created_by, created_at, updated_at
+RETURNING id, title, reference, created_by, created_at, updated_at
 `
 
 type CreateEngagementParams struct {
 	Title     string
+	Reference string
 	CreatedBy uuid.UUID
 }
 
 func (q *Queries) CreateEngagement(ctx context.Context, arg CreateEngagementParams) (AppEngagement, error) {
-	row := q.db.QueryRow(ctx, createEngagement, arg.Title, arg.CreatedBy)
+	row := q.db.QueryRow(ctx, createEngagement, arg.Title, arg.Reference, arg.CreatedBy)
 	var i AppEngagement
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
+		&i.Reference,
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -101,7 +105,7 @@ func (q *Queries) CreateEngagementUpdate(ctx context.Context, arg CreateEngageme
 
 const findEngagementByID = `-- name: FindEngagementByID :one
 SELECT
-    e.id, e.title,
+    e.id, e.title, e.reference,
     e.created_by, u.email AS author_email,
     e.created_at, e.updated_at,
     COALESCE(latest.status, 'en_attente') AS status,
@@ -123,6 +127,7 @@ WHERE e.id = $1
 type FindEngagementByIDRow struct {
 	ID              uuid.UUID
 	Title           string
+	Reference       string
 	CreatedBy       uuid.UUID
 	AuthorEmail     string
 	CreatedAt       time.Time
@@ -137,6 +142,7 @@ func (q *Queries) FindEngagementByID(ctx context.Context, id uuid.UUID) (FindEng
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
+		&i.Reference,
 		&i.CreatedBy,
 		&i.AuthorEmail,
 		&i.CreatedAt,
@@ -226,7 +232,7 @@ func (q *Queries) ListEngagementUpdates(ctx context.Context, engagementID uuid.U
 
 const listEngagements = `-- name: ListEngagements :many
 SELECT
-    e.id, e.title,
+    e.id, e.title, e.reference,
     e.created_by, u.email AS author_email,
     e.created_at, e.updated_at,
     COALESCE(latest.status, 'en_attente') AS status,
@@ -255,6 +261,7 @@ type ListEngagementsParams struct {
 type ListEngagementsRow struct {
 	ID              uuid.UUID
 	Title           string
+	Reference       string
 	CreatedBy       uuid.UUID
 	AuthorEmail     string
 	CreatedAt       time.Time
@@ -275,6 +282,7 @@ func (q *Queries) ListEngagements(ctx context.Context, arg ListEngagementsParams
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,
+			&i.Reference,
 			&i.CreatedBy,
 			&i.AuthorEmail,
 			&i.CreatedAt,
@@ -290,6 +298,34 @@ func (q *Queries) ListEngagements(ctx context.Context, arg ListEngagementsParams
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateEngagement = `-- name: UpdateEngagement :one
+UPDATE app.engagements
+SET title = $1,
+    reference = $2
+WHERE id = $3
+RETURNING id, title, reference, created_by, created_at, updated_at
+`
+
+type UpdateEngagementParams struct {
+	Title     string
+	Reference string
+	ID        uuid.UUID
+}
+
+func (q *Queries) UpdateEngagement(ctx context.Context, arg UpdateEngagementParams) (AppEngagement, error) {
+	row := q.db.QueryRow(ctx, updateEngagement, arg.Title, arg.Reference, arg.ID)
+	var i AppEngagement
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Reference,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const updateEngagementUpdate = `-- name: UpdateEngagementUpdate :one

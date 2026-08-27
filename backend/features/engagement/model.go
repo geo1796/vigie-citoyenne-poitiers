@@ -28,6 +28,9 @@ type Engagement struct {
 	Title  string `json:"title"`
 	Status Status `json:"status"`
 
+	// Reference documente la provenance de l'engagement (texte libre).
+	Reference string `json:"reference"`
+
 	AuthorEmail string `json:"authorEmail"`
 
 	// EventDate est la date la plus récente parmi les `event_date` des mises à jour
@@ -62,7 +65,15 @@ type EngagementUpdate struct {
 // Un engagement n'est qu'un intitulé ; son avancement se documente ensuite via
 // des mises à jour.
 type CreateEngagementInput struct {
-	Title string `json:"title" validate:"required"`
+	Title     string `json:"title" validate:"required"`
+	Reference string `json:"reference" validate:"required"`
+}
+
+// UpdateEngagementInput est le corps attendu pour la modification d'un engagement.
+// Les deux champs sont remplacés à chaque appel (sémantique PUT).
+type UpdateEngagementInput struct {
+	Title     string `json:"title" validate:"required"`
+	Reference string `json:"reference" validate:"required"`
 }
 
 // CreateEngagementUpdateInput est le corps attendu pour l'ajout d'une mise à jour.
