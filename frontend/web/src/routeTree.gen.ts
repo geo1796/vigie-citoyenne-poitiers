@@ -27,6 +27,7 @@ import { Route as EngagementsEngagementIdRouteImport } from './routes/engagement
 import { Route as DeliberationsDeliberationIdRouteImport } from './routes/deliberations/$deliberationId'
 import { Route as AdminInviterContributeurRouteImport } from './routes/admin/inviter-contributeur'
 import { Route as EspaceContributeurEngagementsNouveauRouteImport } from './routes/espace-contributeur/engagements/nouveau'
+import { Route as EspaceContributeurEngagementsEngagementIdModifierRouteImport } from './routes/espace-contributeur/engagements/$engagementId/modifier'
 import { Route as EspaceContributeurEngagementsEngagementIdUpdatesNouveauRouteImport } from './routes/espace-contributeur/engagements/$engagementId/updates/nouveau'
 import { Route as EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRouteImport } from './routes/espace-contributeur/engagements/$engagementId/updates/$updateId'
 
@@ -123,6 +124,12 @@ const EspaceContributeurEngagementsNouveauRoute =
     path: '/espace-contributeur/engagements/nouveau',
     getParentRoute: () => rootRouteImport,
   } as any)
+const EspaceContributeurEngagementsEngagementIdModifierRoute =
+  EspaceContributeurEngagementsEngagementIdModifierRouteImport.update({
+    id: '/espace-contributeur/engagements/$engagementId/modifier',
+    path: '/espace-contributeur/engagements/$engagementId/modifier',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute =
   EspaceContributeurEngagementsEngagementIdUpdatesNouveauRouteImport.update({
     id: '/espace-contributeur/engagements/$engagementId/updates/nouveau',
@@ -154,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/indicateurs/': typeof IndicateursIndexRoute
   '/nominations/': typeof NominationsIndexRoute
   '/espace-contributeur/engagements/nouveau': typeof EspaceContributeurEngagementsNouveauRoute
+  '/espace-contributeur/engagements/$engagementId/modifier': typeof EspaceContributeurEngagementsEngagementIdModifierRoute
   '/espace-contributeur/engagements/$engagementId/updates/$updateId': typeof EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute
   '/espace-contributeur/engagements/$engagementId/updates/nouveau': typeof EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute
 }
@@ -175,6 +183,7 @@ export interface FileRoutesByTo {
   '/indicateurs': typeof IndicateursIndexRoute
   '/nominations': typeof NominationsIndexRoute
   '/espace-contributeur/engagements/nouveau': typeof EspaceContributeurEngagementsNouveauRoute
+  '/espace-contributeur/engagements/$engagementId/modifier': typeof EspaceContributeurEngagementsEngagementIdModifierRoute
   '/espace-contributeur/engagements/$engagementId/updates/$updateId': typeof EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute
   '/espace-contributeur/engagements/$engagementId/updates/nouveau': typeof EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute
 }
@@ -197,6 +206,7 @@ export interface FileRoutesById {
   '/indicateurs/': typeof IndicateursIndexRoute
   '/nominations/': typeof NominationsIndexRoute
   '/espace-contributeur/engagements/nouveau': typeof EspaceContributeurEngagementsNouveauRoute
+  '/espace-contributeur/engagements/$engagementId/modifier': typeof EspaceContributeurEngagementsEngagementIdModifierRoute
   '/espace-contributeur/engagements/$engagementId/updates/$updateId': typeof EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute
   '/espace-contributeur/engagements/$engagementId/updates/nouveau': typeof EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute
 }
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/indicateurs/'
     | '/nominations/'
     | '/espace-contributeur/engagements/nouveau'
+    | '/espace-contributeur/engagements/$engagementId/modifier'
     | '/espace-contributeur/engagements/$engagementId/updates/$updateId'
     | '/espace-contributeur/engagements/$engagementId/updates/nouveau'
   fileRoutesByTo: FileRoutesByTo
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/indicateurs'
     | '/nominations'
     | '/espace-contributeur/engagements/nouveau'
+    | '/espace-contributeur/engagements/$engagementId/modifier'
     | '/espace-contributeur/engagements/$engagementId/updates/$updateId'
     | '/espace-contributeur/engagements/$engagementId/updates/nouveau'
   id:
@@ -262,6 +274,7 @@ export interface FileRouteTypes {
     | '/indicateurs/'
     | '/nominations/'
     | '/espace-contributeur/engagements/nouveau'
+    | '/espace-contributeur/engagements/$engagementId/modifier'
     | '/espace-contributeur/engagements/$engagementId/updates/$updateId'
     | '/espace-contributeur/engagements/$engagementId/updates/nouveau'
   fileRoutesById: FileRoutesById
@@ -284,6 +297,7 @@ export interface RootRouteChildren {
   IndicateursIndexRoute: typeof IndicateursIndexRoute
   NominationsIndexRoute: typeof NominationsIndexRoute
   EspaceContributeurEngagementsNouveauRoute: typeof EspaceContributeurEngagementsNouveauRoute
+  EspaceContributeurEngagementsEngagementIdModifierRoute: typeof EspaceContributeurEngagementsEngagementIdModifierRoute
   EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute: typeof EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute
   EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute: typeof EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute
 }
@@ -409,6 +423,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EspaceContributeurEngagementsNouveauRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/espace-contributeur/engagements/$engagementId/modifier': {
+      id: '/espace-contributeur/engagements/$engagementId/modifier'
+      path: '/espace-contributeur/engagements/$engagementId/modifier'
+      fullPath: '/espace-contributeur/engagements/$engagementId/modifier'
+      preLoaderRoute: typeof EspaceContributeurEngagementsEngagementIdModifierRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/espace-contributeur/engagements/$engagementId/updates/nouveau': {
       id: '/espace-contributeur/engagements/$engagementId/updates/nouveau'
       path: '/espace-contributeur/engagements/$engagementId/updates/nouveau'
@@ -445,6 +466,8 @@ const rootRouteChildren: RootRouteChildren = {
   NominationsIndexRoute: NominationsIndexRoute,
   EspaceContributeurEngagementsNouveauRoute:
     EspaceContributeurEngagementsNouveauRoute,
+  EspaceContributeurEngagementsEngagementIdModifierRoute:
+    EspaceContributeurEngagementsEngagementIdModifierRoute,
   EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute:
     EspaceContributeurEngagementsEngagementIdUpdatesUpdateIdRoute,
   EspaceContributeurEngagementsEngagementIdUpdatesNouveauRoute:

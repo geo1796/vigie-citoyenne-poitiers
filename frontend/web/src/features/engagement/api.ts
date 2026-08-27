@@ -74,6 +74,22 @@ export const useCreateEngagement = () => {
   });
 };
 
+export const useUpdateEngagement = (engagementId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: CreateEngagementInput): Promise<Engagement> => {
+      const raw = await api.put(`engagements/${engagementId}`, { json: input }).json();
+      return engagementSchema.parse(raw);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['engagements'] });
+    },
+    onError: () => {
+      toast.error('Une erreur est survenue. Réessayez dans un instant.');
+    },
+  });
+};
+
 export const useCreateEngagementUpdate = (engagementId: string) => {
   const qc = useQueryClient();
   return useMutation({

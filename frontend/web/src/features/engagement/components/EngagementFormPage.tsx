@@ -4,27 +4,34 @@ import { toast } from 'sonner';
 import { Button } from '@/shadcn/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/shadcn/components/ui/field';
 import { Input } from '@/shadcn/components/ui/input';
-import { useCreateEngagement } from '../api';
-import { createEngagementInputSchema } from '../model';
+import { useCreateEngagement, useUpdateEngagement } from '../api';
+import { createEngagementInputSchema, type Engagement } from '../model';
 
-export function EngagementFormPage() {
+export function EngagementFormPage({ engagement }: { engagement?: Engagement }) {
+  const isEdit = engagement !== undefined;
   const navigate = useNavigate();
   const create = useCreateEngagement();
+  const edit = useUpdateEngagement(engagement?.id ?? '');
+  const pending = isEdit ? edit.isPending : create.isPending;
 
   const form = useForm({
-    defaultValues: { title: '', reference: '' },
+    defaultValues: {
+      title: engagement?.title ?? '',
+      reference: engagement?.reference ?? '',
+    },
     validators: {
       onSubmit: createEngagementInputSchema,
     },
     onSubmit: async ({ value }) => {
-      create.mutate(
+      const mutation = isEdit ? edit : create;
+      mutation.mutate(
         { title: value.title, reference: value.reference },
         {
-          onSuccess: (engagement) => {
-            toast.success('Engagement enregistré.');
+          onSuccess: (saved) => {
+            toast.success(isEdit ? 'Engagement modifié.' : 'Engagement enregistré.');
             navigate({
               to: '/engagements/$engagementId',
-              params: { engagementId: engagement.id },
+              params: { engagementId: saved.id },
             });
           },
         },
@@ -38,7 +45,9 @@ export function EngagementFormPage() {
         <p className="text-xs uppercase tracking-wider text-muted-foreground">
           Espace contributeur
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">Nouvel engagement</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {isEdit ? "Modifier l'engagement" : 'Nouvel engagement'}
+        </h1>
         <p className="text-sm text-muted-foreground">
           Enregistrez une promesse publique. Vous documenterez ensuite son avancement au fil de
           mises à jour.
@@ -95,8 +104,12 @@ export function EngagementFormPage() {
           </form.Field>
         </FieldGroup>
 
-        <Button type="submit" className="mt-6 w-full" disabled={create.isPending}>
-          {create.isPending ? 'Enregistrement…' : "Enregistrer l'engagement"}
+        <Button type="submit" className="mt-6 w-full" disabled={pending}>
+          {pending
+            ? 'Enregistrement…'
+            : isEdit
+              ? 'Enregistrer les modifications'
+              : "Enregistrer l'engagement"}
         </Button>
       </form>
     </div>

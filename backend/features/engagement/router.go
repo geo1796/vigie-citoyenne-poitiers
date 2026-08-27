@@ -16,6 +16,7 @@ func Router(queries *dao.Queries, accessTokenManager auth.AccessTokenManager) ch
 		auth.UseAuthenticate(r, accessTokenManager)
 		auth.UseRequireRole(r, auth.RoleContributeur)
 		r.Post("/", NewCreateEngagementHandler(queries).CreateEngagement())
+		r.Put("/{id}", NewUpdateEngagementHandler(queries).UpdateEngagement())
 		r.Post("/{id}/updates", NewCreateEngagementUpdateHandler(queries).CreateEngagementUpdate())
 		r.Put("/{id}/updates/{updateId}", NewUpdateEngagementUpdateHandler(queries).UpdateEngagementUpdate())
 	})

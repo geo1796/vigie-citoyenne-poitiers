@@ -300,6 +300,34 @@ func (q *Queries) ListEngagements(ctx context.Context, arg ListEngagementsParams
 	return items, nil
 }
 
+const updateEngagement = `-- name: UpdateEngagement :one
+UPDATE app.engagements
+SET title = $1,
+    reference = $2
+WHERE id = $3
+RETURNING id, title, reference, created_by, created_at, updated_at
+`
+
+type UpdateEngagementParams struct {
+	Title     string
+	Reference string
+	ID        uuid.UUID
+}
+
+func (q *Queries) UpdateEngagement(ctx context.Context, arg UpdateEngagementParams) (AppEngagement, error) {
+	row := q.db.QueryRow(ctx, updateEngagement, arg.Title, arg.Reference, arg.ID)
+	var i AppEngagement
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Reference,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateEngagementUpdate = `-- name: UpdateEngagementUpdate :one
 UPDATE app.engagement_updates
 SET status = $1,

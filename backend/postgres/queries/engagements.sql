@@ -52,6 +52,13 @@ LEFT JOIN LATERAL (
 ) latest ON TRUE
 WHERE e.id = $1;
 
+-- name: UpdateEngagement :one
+UPDATE app.engagements
+SET title = @title,
+    reference = @reference
+WHERE id = @id
+RETURNING id, title, reference, created_by, created_at, updated_at;
+
 -- name: CreateEngagementUpdate :one
 INSERT INTO app.engagement_updates (
     engagement_id,

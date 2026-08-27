@@ -69,6 +69,13 @@ type CreateEngagementInput struct {
 	Reference string `json:"reference" validate:"required"`
 }
 
+// UpdateEngagementInput est le corps attendu pour la modification d'un engagement.
+// Les deux champs sont remplacés à chaque appel (sémantique PUT).
+type UpdateEngagementInput struct {
+	Title     string `json:"title" validate:"required"`
+	Reference string `json:"reference" validate:"required"`
+}
+
 // CreateEngagementUpdateInput est le corps attendu pour l'ajout d'une mise à jour.
 // La note (`content`) est obligatoire ; la délibération et la source externe sont
 // toutes deux optionnelles.

@@ -76,6 +76,7 @@ export function EngagementPage() {
   const { data } = useSuspenseQuery(engagementsQueries.detail(engagementId));
 
   const { engagement, updates } = data;
+  const canEditEngagement = isContributeur && sessionEmail === engagement.authorEmail;
 
   const handleBack = () => {
     router.navigate({ to: '/engagements', search: { limit: 25, offset: 0 } });
@@ -101,9 +102,27 @@ export function EngagementPage() {
         <EngagementStatusBadge status={engagement.status} />
       </div>
 
-      <h1 className="text-balance text-2xl font-semibold leading-tight tracking-tight sm:text-4xl">
-        {engagement.title}
-      </h1>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <h1 className="text-balance text-2xl font-semibold leading-tight tracking-tight sm:text-4xl">
+          {engagement.title}
+        </h1>
+        {canEditEngagement && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 gap-1.5"
+            render={
+              <Link
+                to="/espace-contributeur/engagements/$engagementId/modifier"
+                params={{ engagementId }}
+              >
+                <Pencil className="size-4" />
+                Modifier
+              </Link>
+            }
+          />
+        )}
+      </div>
 
       <p className="mt-4 text-sm text-muted-foreground">
         <span className="font-medium text-foreground">Source · </span>
